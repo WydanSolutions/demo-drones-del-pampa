@@ -3782,7 +3782,7 @@ function igPintar(){
     $('#ig-saludo').innerHTML = `<b>${saludoHora()}</b><span>Elegí tu usuario para entrar</span>`;
     const us = D().usuarios.filter(u => u.activo && !u.oculto);
     c.innerHTML = `<div class="ig-usuarios">${us.map((u, i) => `<button class="ig-u ${i === us.length - 1 && us.length % 2 ? 'ancho' : ''}" style="--i:${i}" onclick="igElegir('${u.id}')">
-        ${avatar(u.nombre)}<span><b>${esc(u.nombre)}</b><small>${esc(u.cargo || TIPOS_USUARIO[u.tipo].t)}</small></span></button>`).join('')}</div>
+        ${avatar(u.nombre)}<span><b>${esc(u.nombre)}</b><small>${esc(u.cargo || TIPOS_USUARIO[u.tipo].t)}${sinClave(u) ? ' · entra sin contraseña' : ''}</small></span></button>`).join('')}</div>
       <div class="ig-ayuda">${ico('info')}<span>Demostración · la contraseña es <b>${CLAVE_DEMO}</b> para todos</span></div>`;
   } else {
     const u = usuario(IG.u);
@@ -3799,7 +3799,13 @@ function igPintar(){
     setTimeout(() => i.focus(), 60);
   }
 }
-function igElegir(id){ IG.u = id; IG.paso = 'clave'; igPintar(); }
+// La tablet del mostrador entra sin contraseña (decisión de la usuaria, 06/11/2026): solo consulta precios.
+// Se puede cambiar en Configuración › Usuarios. En la versión real la tablet queda con la sesión abierta en ese equipo.
+const sinClave = u => u && u.tipo === 'consulta' && u.sinClave !== false;
+function igElegir(id){
+  if (sinClave(usuario(id))){ USUARIO = id; registrar('Entró la tablet del mostrador (sin contraseña)', '', 'ingreso'); guardar(); despegar(); return; }
+  IG.u = id; IG.paso = 'clave'; igPintar();
+}
 function igVolver(){ IG.paso = 'usuarios'; IG.u = null; igPintar(); }
 function igVer(){ const i = $('#ig-in'); i.type = i.type === 'password' ? 'text' : 'password'; i.focus(); }
 function igEntrar(){
@@ -7397,6 +7403,7 @@ function cfgUsuarios(){
       return `<div class="u-it ${u.activo ? '' : 'inactivo'} ${ab ? 'ab' : ''}"><button class="u-cab" onclick="CFG.uabierto=${ab ? 'null' : `'${u.id}'`};ir('config',true,true)">${avatar(u.nombre)}<span><b>${esc(u.nombre)}</b><small>${TIPOS_USUARIO[u.tipo].t} · ${esc(u.cargo)}</small></span>${u.activo ? chip('Activo', 'verde') : chip('Inactivo', 'gris')}${ico(ab ? 'arriba' : 'abajo', 'chico')}</button>
         ${ab ? `<div class="u-det">
           ${u.tipo !== 'dueno' ? `<div class="fila-int"><div><b>Permisos por área</b><small>Lo que ve y puede usar</small></div><div class="areas">${AREAS.map(a => `<label class="cfg-tgl">${interruptor('p_' + u.id + a, perm.includes(a), `cfgPerm('${u.id}','${a}',this.checked)`)}<small>${a}</small></label>`).join('')}</div></div>` : ''}
+          ${u.tipo === 'consulta' ? `<div class="fila-int"><div><b>Entra sin contraseña</b><small>Para la tablet del mostrador: un toque y queda en la consulta de precios (no vende, no retira, no ve costos)</small></div>${interruptor('sc_' + u.id, u.sinClave !== false, `cfgU('${u.id}','sinClave',this.checked)`)}</div>` : ''}
           <div class="fila-int"><div><b>Mi espacio</b><small>Notas, calendario, recordatorios y tareas privadas</small></div>${interruptor('me_' + u.id, !!u.miEspacio, `cfgU('${u.id}','miEspacio',this.checked)`)}</div>
           ${u.tipo !== 'dueno' ? `<div class="fila-int"><div><b>Ve el registro de actividad</b><small>Por defecto, solo Claudio</small></div>${interruptor('va_' + u.id, !!u.verActividad, `cfgU('${u.id}','verActividad',this.checked, true)`)}</div>` : ''}
           ${u.tipo === 'externo' ? `<div class="fila-int"><div><b>Qué datos ve</b><small>Casillas para mostrarle u ocultarle cada dato</small></div><div class="areas">${[['telefono', 'Teléfono del cliente'], ['recibio', 'Quién recibió']].map(([k, t]) => `<label class="cfg-tgl">${interruptor('ve_' + k, !!cfgGet('verEsteban.' + k), `cfgSet('verEsteban.${k}', this.checked)`)}<small>${t}</small></label>`).join('')}</div></div>` : ''}
@@ -7408,7 +7415,7 @@ function cfgUF(k){ CFG.ufiltro = k; ir('config', true, true); }
 async function cfgU(id, k, v, delicado){
   const u = usuario(id);
   if (delicado && v && !await confirmar('¿Darle acceso?', `${esc(u.nombre)} va a ver la pestaña Actividad con los nombres de quién hizo cada cosa.`, 'Dar acceso')){ ir('config', true, true); return; }
-  u[k] = v; registrar(`Cambió «${k === 'miEspacio' ? 'Mi espacio' : 'Ve la actividad'}» de ${u.nombre}`, u.nombre, 'config', { [k]:String(!v) }, { [k]:String(v) }); guardar(); guardadoCfg(); ir('config', true, true);
+  u[k] = v; registrar(`Cambió «${{ miEspacio:'Mi espacio', verActividad:'Ve la actividad', sinClave:'Entra sin contraseña' }[k] || k}» de ${u.nombre}`, u.nombre, 'config', { [k]:String(!v) }, { [k]:String(v) }); guardar(); guardadoCfg(); ir('config', true, true);
 }
 async function cfgPerm(id, a, v){
   const u = usuario(id);
