@@ -4434,25 +4434,67 @@ function abrirEscaner(captura){
    No se analiza la imagen entera achicada: se recorta el centro (donde está el recuadro) a resolución completa,
    alternando una franja ancha (códigos de barras) y un cuadrado (QR), y se le pide al lector que se esfuerce.
    Si la cámara en vivo no lo enfoca (pasa con etiquetas chicas), «Sacar una foto» usa la cámara del celular,
-   que enfoca mucho mejor. Sigue leyendo: después de cada lectura espera un momento y queda lista para el próximo. */
+   que enfoca mucho mejor. Sigue leyendo: después de cada lectura espera un momento y queda lista para el próximo.
+   ⚠ ZXing trabaja en un «trabajador» aparte (Web Worker): si lee en la página misma la frena un instante en cada
+   intento y la animación de la ficha del artículo se tranca. Si el trabajador no arranca, lee en la página. */
 const ZXING = 'https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/zxing-browser.min.js';
+const ZXING_NUCLEO = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
+const FORMATOS_ZX = ['CODE_128', 'QR_CODE', 'EAN_13', 'EAN_8', 'CODE_39', 'UPC_A', 'UPC_E', 'ITF', 'DATA_MATRIX'];
+function crearTrabajador(){
+  const codigo = `importScripts('${ZXING_NUCLEO}');
+    const Z = self.ZXing, pistas = new Map();
+    pistas.set(Z.DecodeHintType.POSSIBLE_FORMATS, ${JSON.stringify(FORMATOS_ZX)}.map(x => Z.BarcodeFormat[x]).filter(x => x !== undefined));
+    pistas.set(Z.DecodeHintType.TRY_HARDER, true);
+    const lector = new Z.MultiFormatReader(); lector.setHints(pistas);
+    postMessage({ listo:true });
+    onmessage = e => {
+      const { id, w, h, px } = e.data, gris = new Uint8ClampedArray(w * h);
+      for (let i = 0, j = 0; i < gris.length; i++, j += 4) gris[i] = (px[j] * 77 + px[j + 1] * 150 + px[j + 2] * 29) >> 8;
+      let txt = null;
+      try { txt = lector.decodeWithState(new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.RGBLuminanceSource(gris, w, h)))).getText(); } catch (er) {}
+      lector.reset(); postMessage({ id, txt });
+    };`;
+  return new Promise(ok => {
+    let w; try { w = new Worker(URL.createObjectURL(new Blob([codigo], { type:'text/javascript' }))); } catch (e){ return ok(null); }
+    const fin = setTimeout(() => { w.terminate(); ok(null); }, 15000);
+    w.onerror = () => { clearTimeout(fin); w.terminate(); ok(null); };
+    w.onmessage = e => { if (!e.data.listo) return; clearTimeout(fin); ESC.esperan = {}; ESC.nId = 0;
+      w.onmessage = m => { const r = ESC.esperan[m.data.id]; delete ESC.esperan[m.data.id]; if (r) r(m.data.txt); };
+      ok(w); };
+  });
+}
 async function prepararLector(){
-  if (ESC.detector || ESC.zx) return;
-  let formatos = [];
-  if ('BarcodeDetector' in window){ try { formatos = await BarcodeDetector.getSupportedFormats(); } catch (e) {} }
-  if (formatos.includes('code_128')){ ESC.detector = new BarcodeDetector({ formats:['code_128', 'qr_code', 'ean_13', 'ean_8', 'code_39', 'upc_a', 'upc_e', 'itf', 'data_matrix'].filter(x => formatos.includes(x)) }); return; }
-  await new Promise((ok, mal) => { if (window.ZXingBrowser) return ok(); const s = document.createElement('script'); s.src = ZXING; s.onload = ok; s.onerror = mal; document.head.appendChild(s); });
-  const F = ZXingBrowser.BarcodeFormat, pistas = new Map();
-  pistas.set(2, ['CODE_128', 'QR_CODE', 'EAN_13', 'EAN_8', 'CODE_39', 'UPC_A', 'UPC_E', 'ITF', 'DATA_MATRIX'].map(x => F[x]).filter(x => x !== undefined)); // 2 = formatos posibles
-  pistas.set(3, true);                                                                                                                          // 3 = esforzarse más
-  ESC.zx = new ZXingBrowser.BrowserMultiFormatReader(pistas);
+  if (ESC.detector || ESC.trab || ESC.zx) return;
+  if (ESC.preparando) return ESC.preparando;
+  ESC.preparando = (async () => {
+    let formatos = [];
+    if ('BarcodeDetector' in window){ try { formatos = await BarcodeDetector.getSupportedFormats(); } catch (e) {} }
+    if (formatos.includes('code_128')){ ESC.detector = new BarcodeDetector({ formats:FORMATOS_ZX.map(x => x.toLowerCase()).filter(x => formatos.includes(x)) }); return; }
+    ESC.trab = await crearTrabajador(); if (ESC.trab) return;
+    await new Promise((ok, mal) => { if (window.ZXingBrowser) return ok(); const s = document.createElement('script'); s.src = ZXING; s.onload = ok; s.onerror = mal; document.head.appendChild(s); });
+    const F = ZXingBrowser.BarcodeFormat, pistas = new Map();
+    pistas.set(2, FORMATOS_ZX.map(x => F[x]).filter(x => x !== undefined)); // 2 = formatos posibles
+    pistas.set(3, true);                                                   // 3 = esforzarse más
+    ESC.zx = new ZXingBrowser.BrowserMultiFormatReader(pistas);
+  })();
+  try { await ESC.preparando; } finally { ESC.preparando = null; }
 }
 // Lee un canvas: devuelve el texto o null
 async function decodificar(c){
   if (ESC.detector){ try { const r = await ESC.detector.detect(c); return r.length ? r[0].rawValue : null; } catch (e){ return null; } }
+  if (ESC.trab){
+    const d = c.getContext('2d', { willReadFrequently:true }).getImageData(0, 0, c.width, c.height), id = ++ESC.nId;
+    return new Promise(ok => { const t = setTimeout(() => { delete ESC.esperan[id]; ok(null); }, 4000); ESC.esperan[id] = txt => { clearTimeout(t); ok(txt); };
+      ESC.trab.postMessage({ id, w:c.width, h:c.height, px:d.data }, [d.data.buffer]); });
+  }
   try { return ESC.zx.decodeFromCanvas(c).getText(); } catch (e){ return null; }
 }
-function leidoCamara(txt){ const ahora = Date.now(); if (!txt || ahora < ESC.pausa || (txt === ESC.ultimo && ahora - ESC.tUlt < 2500)) return; ESC.ultimo = txt; ESC.tUlt = ahora; ESC.pausa = ahora + 1200; leerCodigo(txt); }
+// Lo que lee la cámara: el mismo código que ya está en pantalla no se vuelve a dibujar (si no, la ficha salta cada tanto)
+function leidoCamara(txt){
+  const ahora = Date.now(); if (!txt || ahora < ESC.pausa) return;
+  if (txt === ESC.ultimo && $('#esc-res') && $('#esc-res').firstElementChild) return;
+  ESC.ultimo = txt; ESC.pausa = ahora + 1500; leerCodigo(txt);
+}
 async function prenderCamara(){
   const sin = $('#esc-sin'), pista = $('.esc-pista');
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ sin.innerHTML = `${ico('camara', 'grande')}<span>Este navegador no deja usar la cámara en vivo. Usá «Sacar una foto del código» o escribilo abajo.</span>`; return; }
@@ -4472,7 +4514,7 @@ async function prenderCamara(){
     const paso = async () => {
       if (!ESC.stream) return;
       const W = v.videoWidth, H = v.videoHeight;
-      if (W && H){
+      if (W && H && Date.now() >= ESC.pausa){   // mientras aparece la ficha no se analiza nada: la animación queda suave
         const ancha = ESC.vuelta++ % 2 === 0, sw = Math.round(ancha ? W * .9 : Math.min(W, H) * .8), sh = Math.round(ancha ? H * .45 : sw);
         const k = Math.min(1, 1280 / sw);   // más chico = cada intento es más rápido (el código igual queda con varios píxeles por barra)
         c.width = Math.round(sw * k); c.height = Math.round(sh * k); ctx.drawImage(v, (W - sw) / 2, (H - sh) / 2, sw, sh, 0, 0, c.width, c.height);
