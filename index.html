@@ -1561,6 +1561,91 @@ body.cel .opciones.modelos .opc{min-width:calc(50% - 4px);flex:1 1 calc(50% - 4p
 body.cel .fila-in{flex-wrap:wrap}
 body.cel .fila-in input{min-width:180px}
 
+
+/* ===== css/10-drive.css ===== */
+/* =====================================================================
+   GOOGLE DRIVE DEL TALLER · visor de carpetas, foto en grande,
+   miniaturas «guardadas en Drive» y fotos de los artículos
+   ===================================================================== */
+/* Miniaturas: se tocan para verlas grandes; la nubecita dice que están en Drive */
+.foto-m[data-drive]{cursor:zoom-in}
+.foto-nube{position:absolute;top:4px;left:4px;width:20px;height:20px;border-radius:50%;background:var(--carta);color:var(--verde);display:flex;align-items:center;justify-content:center;box-shadow:var(--s1)}
+.foto-nube .ico{width:12px;height:12px;stroke-width:2.4}
+.fotos.mini .foto-nube{width:16px;height:16px;top:2px;left:2px}
+.fotos.mini .foto-nube .ico{width:10px;height:10px}
+
+/* Foto en grande (va por encima de las ventanas) */
+.visor-foto{position:fixed;inset:0;z-index:850;background:rgba(6,12,26,.86);display:none;align-items:center;justify-content:center;padding:20px}
+.visor-foto.on{display:flex;animation:fundido .18s ease}
+.vf-caja{position:relative;width:min(900px,100%,calc((100vh - 150px) * 4 / 3));display:flex;flex-direction:column;gap:10px}
+.vf-img{position:relative;width:100%;aspect-ratio:4/3;border-radius:16px;overflow:hidden;background:var(--fondo)}
+.vf-img img,.vf-img svg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.vf-pie{color:#fff;display:flex;flex-direction:column;gap:2px}
+.vf-pie b{font-size:15px}
+.vf-pie small{font-size:12.5px;opacity:.8;display:flex;align-items:center;gap:6px}
+.vf-pie .ico{color:var(--verde)}
+.vf-x{position:absolute;top:10px;right:10px;z-index:2;width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;display:flex;align-items:center;justify-content:center}
+
+/* «Guardando en Drive…» */
+.sube-drive{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:36px 16px;color:var(--texto-2)}
+.sube-drive .ico{color:var(--verde);width:44px;height:44px;animation:subeNube 1s ease-in-out infinite}
+.sube-drive b{color:var(--texto);font-size:16px}
+.sube-drive small{font-size:12.5px;color:var(--texto-3);word-break:break-word}
+.sd-barra{width:min(320px,80%);height:6px;border-radius:99px;background:var(--fondo);overflow:hidden;margin-top:6px}
+.sd-barra i{display:block;height:100%;width:0;background:var(--verde);border-radius:99px;animation:llenaBarra 1s ease forwards}
+@keyframes subeNube{50%{transform:translateY(-4px)}}
+@keyframes llenaBarra{to{width:100%}}
+
+/* Visor del Drive */
+.modal-drive h2 .ico{color:var(--verde);vertical-align:-4px}
+.drv-migas{display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:13.5px;margin-bottom:14px;color:var(--texto-3)}
+.drv-migas button{color:var(--cielo);font-weight:600;padding:2px 4px;border-radius:6px}
+.drv-migas button:hover{background:var(--tinte)}
+.drv-migas b{color:var(--texto)}
+.drv-carpetas{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:14px}
+.drv-carpeta{display:flex;align-items:center;gap:12px;text-align:left;padding:12px 14px;border-radius:14px;border:1px solid var(--borde-2);background:var(--carta);transition:border-color .15s,background .15s}
+.drv-carpeta:hover{border-color:var(--cielo);background:var(--tinte)}
+.drv-carpeta>.ico{width:24px;height:24px;color:var(--azul);flex-shrink:0}
+.drv-carpeta b{display:block;font-size:14px}
+.drv-carpeta small{display:block;font-size:12px;color:var(--texto-3);margin-top:1px}
+.drv-fotos{margin-bottom:14px}
+.drv-archivos{display:flex;flex-direction:column;border:1px solid var(--borde-2);border-radius:14px;overflow:hidden}
+.drv-arch{display:flex;align-items:center;gap:12px;text-align:left;padding:10px 14px;background:var(--carta);border-bottom:1px solid var(--borde-2)}
+.drv-arch:last-child{border-bottom:none}
+.drv-arch:hover{background:var(--tinte)}
+.drv-arch.on{background:var(--tinte-verde);box-shadow:inset 3px 0 0 var(--verde)}
+.drv-arch>span:nth-child(2){flex:1;min-width:0}
+.drv-arch b{display:block;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.drv-arch small{display:block;font-size:12px;color:var(--texto-3)}
+.drv-arch>.ico{color:var(--texto-3);flex-shrink:0}
+.drv-ext{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--fondo);color:var(--azul)}
+.drv-ext.pdf{background:var(--rojo-f);color:var(--rojo-t)}
+.drv-ext.xlsx{background:var(--ok-f);color:var(--ok-t)}
+.drv-ext .ico{width:18px;height:18px}
+
+/* Tarjeta de Configuración */
+.drive-cfg{align-items:flex-start;flex-wrap:wrap}
+.drive-cfg>div{flex:1;min-width:220px}
+.drv-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.drv-chips button{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;padding:5px 10px;border-radius:999px;background:var(--carta);border:1px solid var(--borde-2)}
+.drv-chips button:hover{border-color:var(--cielo);color:var(--cielo)}
+
+/* Fotos de los artículos (opcionales) */
+.con-foto{position:relative;overflow:hidden;padding:0}
+.con-foto>img,.con-foto>svg.foto-dron{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pf-izq{display:flex;flex-direction:column;gap:10px}
+.pf-foto{width:100%;aspect-ratio:4/3;border-radius:14px;border:1px solid var(--borde-2)}
+.pf-foto .foto-m{width:100%;height:100%;border:none;border-radius:0}
+.pf-sin{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1.5px dashed var(--borde);color:var(--cielo);background:var(--tinte);font-size:13px;font-weight:600}
+.pf-sin .ico{width:26px;height:26px}
+.fp-foto{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.fp-prev{width:120px;height:90px;border-radius:12px;border:1px solid var(--borde-2);flex-shrink:0}
+.fp-acc{display:flex;flex-direction:column;align-items:flex-start;gap:6px;flex:1;min-width:180px}
+.fp-acc small{font-size:12.5px;color:var(--texto-3)}
+.cf-foto.con-foto,.esc-foto.con-foto{background:var(--fondo)}
+body.cel .pf-foto{aspect-ratio:16/9}
+body.cel .drv-carpetas{grid-template-columns:1fr}
+
 </style>
 </head>
 <body>
@@ -1955,6 +2040,9 @@ const ICONOS = {
   filtro: '<path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>',
   calendario: '<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
   camara: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3.2"/>',
+  carpeta: '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+  nube: '<path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/>',
+  abrir: '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
   foto: '<rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',
   micro: '<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4"/>',
   editar: '<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
@@ -4618,7 +4706,7 @@ function fichaProducto(p){
   const acc = [];
   if (t === 'tecnico') acc.push(`<button class="btn btn-prim" onclick="agregarAMiOrden('${esc(p.cod)}')">${ico('llave')} Agregar a mi orden</button>`);
   if (puedeVer('ventas')) acc.push(`<button class="btn ${t === 'tecnico' ? 'btn-linea' : 'btn-prim'}" onclick="cerrarModal();ventaCon('${esc(p.cod)}')">${ico('carrito')} Vender</button>`);
-  return `<div class="esc-ficha prod"><div class="esc-foto">${ico(icoCategoria(p.cat), 'grande')}</div>
+  return `<div class="esc-ficha prod"><div class="esc-foto ${p.foto ? 'con-foto' : ''}">${imgArticulo(p, 'grande')}</div>
     <div class="esc-datos"><small>${p.cod} · ${esc(p.cat)}</small><h3>${esc(p.nombre)}</h3>
       <div class="esc-precio"><b class="num">${usd(p.precio)}</b><span>precio final con IVA</span></div>
       <div class="esc-disp"><span class="chip c-${e.c}"><i class="punto"></i>${p.stock} disponible${p.stock === 1 ? '' : 's'}</span><span>${ico('ubicacion', 'chico')} Estante ${esc(p.ubic)}</span>${verCostos() && p.costo ? `<span class="sutil">Costo ${usd(p.costo)}</span>` : ''}</div>
@@ -5042,14 +5130,18 @@ function contadorNum(nombre, valor, min, max, fn){
   return `<div class="contador-num"><button type="button" onclick="${fn}('${nombre}',${Math.max(min, valor - 1)})" aria-label="Menos">${ico('menos')}</button><b class="num">${valor}</b><button type="button" onclick="${fn}('${nombre}',${Math.min(max, valor + 1)})" aria-label="Más">${ico('mas')}</button></div>`;
 }
 
-/* ---------- Fotos: «Sacar foto» abre la cámara directo; se guardan comprimidas ---------- */
-function tomarFoto(){
+/* ---------- Fotos: «Sacar foto» abre la cámara directo; se guardan comprimidas ----------
+   En la página real se achican a ~1600 px (~250 KB) y van al Google Drive del taller (ver 11b-drive.js).
+   En la demo quedan en el navegador, más chicas (720 px), para no llenarlo.
+   o.galeria: deja elegir una foto que ya está en el celular (para los artículos). */
+function tomarFoto(o){
+  o = o || {};
   return new Promise(res => {
-    const i = document.createElement('input'); i.type = 'file'; i.accept = 'image/*'; i.setAttribute('capture', 'environment');
+    const i = document.createElement('input'); i.type = 'file'; i.accept = 'image/*'; if (!o.galeria) i.setAttribute('capture', 'environment');
     i.onchange = () => {
       const f = i.files[0]; if (!f) return res(null);
       const img = new Image();
-      img.onload = () => { const k = Math.min(1, 720 / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = img.width * k; c.height = img.height * k;
+      img.onload = () => { const k = Math.min(1, (o.max || 720) / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = img.width * k; c.height = img.height * k;
         c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(img.src); res({ src:c.toDataURL('image/jpeg', .62), f:hoy(), h:hora(), u:usuarioId() }); };
       img.src = URL.createObjectURL(f);
     };
@@ -5097,6 +5189,115 @@ const sel = (nombre, opciones, valor, extra) => `<select name="${nombre}" ${extr
 function leerForm(raiz){ const o = {}; $$('[name]', raiz).forEach(el => { o[el.name] = el.type === 'checkbox' ? el.checked : el.value.trim(); }); return o; }
 const siguienteNum = (clave, pref, largo) => { D()[clave] = (D()[clave] || 0) + 1; return pref + String(D()[clave]).padStart(largo || 4, '0'); };
 function telCli(id){ const c = cliente(id); return c ? c.tel : ''; }
+
+
+/* ===== js/11b-drive.js ===== */
+/* =====================================================================
+   GOOGLE DRIVE DEL TALLER (en la demo es simulado: se ve igual, no sube nada)
+   Versión real (decisión del 09/11/2026): cuenta de Google NUEVA del taller,
+   solo para la página, compartida con Wydan para controlar los respaldos.
+   La página achica cada foto en el celular, la sube a Drive con un Apps Script
+   creado en ESA cuenta (así el espacio es del taller) y en Firebase queda solo
+   el ID del archivo. Las vistas previas se piden por el mismo Apps Script:
+   los archivos nunca se hacen públicos.
+   Acá: el visor de carpetas, la foto en grande y las miniaturas «en Drive».
+   ===================================================================== */
+const DRIVE_RAIZ = 'Drones del Pampa · Página';
+const DRIVE_CARPETAS = [
+  ['Facturas de venta', 'factura', 'Los PDF de GNS que se suben en Facturación, por año y mes'],
+  ['Facturas de compras', 'camion', 'Las facturas de Dragur, por año'],
+  ['Fotos de recepciones', 'camara', 'Una carpeta por orden, con todas sus fotos'],
+  ['Fotos de pedidos', 'caja', 'Las fotos del control de lo que llega de Dragur'],
+  ['Fotos de artículos', 'etiqueta', 'Las fotos de los artículos que tengan'],
+  ['Respaldos', 'historial', 'Una copia de todos los datos, todos los días']
+];
+const MESES_DRIVE = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Setiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+const driveCuenta = () => cfgGet('drive.cuenta');
+
+/* ---------- Dónde queda cada cosa ---------- */
+const carpetaFactura = f => f.pdf && f.pdf.carpeta ? f.pdf.carpeta : `Facturas de venta / ${f.f.slice(0, 4)} / ${f.f.slice(5, 7)}`;
+const nombreFactura = f => f.pdf && f.pdf.nombre ? f.pdf.nombre : `Factura ${String(f.num).replace(/^A-/, '')} - ${nomCli(f.cli)} - ${fArchivo(f.f)}.pdf`;
+const carpetaCompra = p => `Facturas de compras / ${(p.fRecibido || p.f).slice(0, 4)}`;
+const carpetaOrden = o => `Fotos de recepciones / ${o.f.slice(0, 4)} / ${o.num}`;
+// Las fotos de la recepción de una orden (las de ejemplo si la orden es de las sembradas)
+function fotosOrden(o){
+  const k = o.check || {};
+  return k.contenido ? fotosRec(k) : [{ foto:fotoEj('pantalla', 3 + (Number(o.num.slice(-3)) || 0)), t:'Horas de vuelo' }, { foto:Object.assign(fotoEj('dron', 7 + (Number(o.num.slice(-3)) || 0)), { modelo:o.modelo }), t:'Frente' }];
+}
+
+/* ---------- Miniatura de una foto: queda en Drive y se agranda al tocarla ---------- */
+function fotoM(f, t, ruta, extra){
+  return `<div class="foto-m" data-drive="${esc(ruta || '')}" title="Tocá para verla grande">${fotoHTML(f)}<i class="foto-nube" title="Guardada en el Drive del taller">${ico('nube')}</i><small>${esc(t || '')}</small>${extra || ''}</div>`;
+}
+function verFotoGrande(el){
+  const media = el.querySelector('img, svg.foto-dron'); if (!media) return;
+  const t = (el.querySelector('small') || {}).textContent || 'Foto', ruta = el.dataset.drive || '';
+  let v = $('#visor-foto');
+  if (!v){ v = document.createElement('div'); v.id = 'visor-foto'; v.className = 'visor-foto'; document.body.appendChild(v);
+    v.addEventListener('click', e => { if (e.target === v || e.target.closest('.vf-x')) cerrarFotoGrande(); }); }
+  v.innerHTML = `<div class="vf-caja"><button class="vf-x" aria-label="Cerrar">${ico('x')}</button><div class="vf-img">${media.outerHTML}</div>
+    <div class="vf-pie"><b>${esc(t)}</b><small>${ico('nube', 'chico')} Guardada en el Google Drive del taller${ruta ? ' › ' + esc(ruta) : ''}</small></div></div>`;
+  v.classList.remove('hidden'); v.classList.add('on');
+}
+function cerrarFotoGrande(){ const v = $('#visor-foto'); if (v) v.classList.remove('on'); }
+document.addEventListener('click', e => { const m = e.target.closest('.foto-m'); if (!m || e.target.closest('button')) return; verFotoGrande(m); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#visor-foto.on')){ e.stopPropagation(); cerrarFotoGrande(); } }, true);
+
+// Paso «Guardando en Drive…» (en la real es lo que tarda en subir; en la demo, un instante)
+function subiendoDrive(caja, nombre, carpeta){
+  if (caja) caja.innerHTML = `<div class="sube-drive">${ico('nube', 'grande')}<b>Guardando en el Google Drive del taller…</b><small>${esc(carpeta)} / ${esc(nombre)}</small><div class="sd-barra"><i></i></div></div>`;
+  return new Promise(ok => setTimeout(ok, 1100));
+}
+
+/* ---------- El visor del Drive ---------- */
+function contenidoDrive(p){
+  const anios = l => [...new Set(l)].sort().reverse();
+  const carpeta = (n, extra) => Object.assign({ tipo:'carpeta', n }, extra || {});
+  if (!p.length) return DRIVE_CARPETAS.map(([n, i, d]) => carpeta(n, { ico:i, sub:d }));
+  const [raiz, a, b] = p;
+  if (raiz === 'Facturas de venta'){
+    const fs = facturasActivas().filter(f => f.f);
+    if (!a) return anios(fs.map(f => f.f.slice(0, 4))).map(y => carpeta(y, { sub:fs.filter(f => f.f.startsWith(y)).length + ' facturas' }));
+    if (!b) return [...new Set(fs.filter(f => f.f.startsWith(a)).map(f => f.f.slice(5, 7)))].sort().reverse().map(m => carpeta(m, { etiqueta:m + ' · ' + MESES_DRIVE[Number(m) - 1], sub:fs.filter(f => f.f.startsWith(a + '-' + m)).length + ' facturas' }));
+    return fs.filter(f => f.f.startsWith(a + '-' + b)).sort((x, y) => y.f.localeCompare(x.f)).map(f => ({ tipo:'pdf', id:f.id, n:nombreFactura(f), sub:`${f.num} · ${usd(f.total)}`, abrir:`verFactura('${f.id}')` }));
+  }
+  if (raiz === 'Facturas de compras'){
+    const ps = D().pedidos.filter(x => x.factura);
+    if (!a) return anios(ps.map(x => (x.fRecibido || x.f).slice(0, 4))).map(y => carpeta(y, { sub:ps.filter(x => (x.fRecibido || x.f).startsWith(y)).length + ' facturas' }));
+    return ps.filter(x => (x.fRecibido || x.f).startsWith(a)).map(x => ({ tipo:'pdf', id:x.id, n:`Factura ${x.factura} - Dragur - ${fArchivo(x.fRecibido || x.f)}.pdf`, sub:'Pedido ' + x.num, abrir:`avisar('En la versión real se abre el PDF de la factura de Dragur','nota')` }));
+  }
+  if (raiz === 'Fotos de recepciones'){
+    const os = D().ordenes.filter(o => !o.anulado);
+    if (!a) return anios(os.map(o => o.f.slice(0, 4))).map(y => carpeta(y, { sub:os.filter(o => o.f.startsWith(y)).length + ' órdenes' }));
+    if (!b) return os.filter(o => o.f.startsWith(a)).sort((x, y) => y.num.localeCompare(x.num)).map(o => carpeta(o.num, { sub:modeloTxt(o.modelo) + ' · ' + nomCli(o.cli) }));
+    const o = os.find(x => x.num === b); return o ? fotosOrden(o).map(f => ({ tipo:'foto', foto:f.foto, n:f.t })) : [];
+  }
+  if (raiz === 'Fotos de pedidos'){
+    const ps = D().pedidos.filter(x => x.lineas.some(l => (l.fotos || []).length));
+    if (!a) return ps.map(x => carpeta(x.num, { sub:sumar(x.lineas, l => (l.fotos || []).length) + ' fotos' }));
+    const x = ps.find(y => y.num === a); return x ? x.lineas.flatMap(l => (l.fotos || []).map(f => ({ tipo:'foto', foto:f, n:l.cod + ' · ' + fDM(f.f) + ' ' + f.h }))) : [];
+  }
+  if (raiz === 'Fotos de artículos') return D().productos.filter(x => x.foto).map(x => ({ tipo:'foto', foto:x.foto, n:x.cod + ' · ' + x.nombre }));
+  if (raiz === 'Respaldos') return Array.from({ length:30 }, (_, i) => sumarDias(hoy(), -i)).flatMap(f => [
+    { tipo:'xlsx', n:`Respaldo ${fArchivo(f)}.xlsx`, sub:'Todos los datos en Excel · 23:00', abrir:`avisar('En la versión real se descarga el respaldo de ese día','nota')` },
+    { tipo:'json', n:`Respaldo ${fArchivo(f)}.json`, sub:'Copia completa para restaurar · 23:00', abrir:`avisar('En la versión real se descarga el respaldo de ese día','nota')` }]);
+  return [];
+}
+function verDrive(ruta, resaltar){
+  const p = String(ruta || '').split(' / ').filter(Boolean), l = contenidoDrive(p);
+  const migas = [[DRIVE_RAIZ, '']].concat(p.map((x, i) => [x, p.slice(0, i + 1).join(' / ')]));
+  const carpetas = l.filter(x => x.tipo === 'carpeta'), fotos = l.filter(x => x.tipo === 'foto'), otros = l.filter(x => !['carpeta', 'foto'].includes(x.tipo));
+  const icoArch = { pdf:['factura', 'pdf'], xlsx:['grafico', 'xlsx'], json:['historial', 'json'] };
+  abrirModal({ titulo:`${ico('nube')} Google Drive del taller`, sub:`${esc(driveCuenta())} · compartido con Wydan`, ancho:'ancho modal-drive',
+    cuerpo:`<nav class="drv-migas">${migas.map(([t, r], i) => i === migas.length - 1 ? `<b>${esc(t)}</b>` : `<button onclick="verDrive('${esc(r)}')">${esc(t)}</button>${ico('der', 'chico')}`).join('')}</nav>
+      ${carpetas.length ? `<div class="drv-carpetas">${carpetas.map(c => `<button class="drv-carpeta" onclick="verDrive('${esc(p.concat(c.n).join(' / '))}')">${ico(c.ico || 'carpeta')}<span><b>${esc(c.etiqueta || c.n)}</b>${c.sub ? `<small>${esc(c.sub)}</small>` : ''}</span></button>`).join('')}</div>` : ''}
+      ${fotos.length ? `<div class="fotos drv-fotos">${fotos.map(f => fotoM(f.foto, f.n, p.join(' / '))).join('')}</div>` : ''}
+      ${otros.length ? `<div class="drv-archivos">${otros.slice(0, 120).map(x => `<button class="drv-arch ${x.id && x.id === resaltar ? 'on' : ''}" ${x.id ? `data-id="${x.id}"` : ''} onclick="${x.abrir}"><span class="drv-ext ${(icoArch[x.tipo] || [])[1] || ''}">${ico((icoArch[x.tipo] || ['nota'])[0])}</span><span><b>${esc(x.n)}</b>${x.sub ? `<small>${esc(x.sub)}</small>` : ''}</span>${ico('abrir', 'chico')}</button>`).join('')}</div>` : ''}
+      ${!l.length ? vacio('Carpeta vacía', 'Todavía no se guardó nada acá.') : ''}
+      <p class="ayuda-sec mt">${ico('info', 'chico')} En la demostración el Drive es simulado. En la página real es la cuenta de Google del taller: lo mismo se ve entrando a drive.google.com.</p>`,
+    pie:p.length ? `<button class="btn btn-linea" onclick="verDrive('${esc(p.slice(0, -1).join(' / '))}')">${ico('izq')} Volver</button>` : '',
+    alAbrir:() => { const r = resaltar && $(`.drv-arch[data-id="${resaltar}"]`); if (r) setTimeout(() => r.scrollIntoView({ block:'center', behavior:'smooth' }), 80); } });
+}
 
 
 /* ===== js/12-documentos.js ===== */
@@ -5299,10 +5500,10 @@ const recTxt = (ruta, v) => recSet(ruta, v, true);
 const recOpc = (ruta, v) => recSet(ruta, v);
 async function recFoto(ruta, ej, extra){
   const f = ej ? Object.assign(fotoEj(ej), extra || {}) : await tomarFoto(); if (!f) return;
-  recSet(ruta, f); if (!ej) avisar('Foto guardada', 'camara');
+  recSet(ruta, f); if (!ej) avisar('Foto guardada en el Drive del taller', 'nube');
 }
 function slotFoto(ruta, f, t, ej, oblig, extra){
-  return f ? `<div class="foto-m">${fotoHTML(f)}<small>${t} · ${f.h}</small><button class="x" onclick="recSet('${ruta}',null)" aria-label="Sacar la foto">${ico('x')}</button></div>`
+  return f ? fotoM(f, t + ' · ' + f.h, 'Fotos de recepciones / ' + hoy().slice(0, 4) + ' / (orden nueva)', `<button class="x" onclick="recSet('${ruta}',null)" aria-label="Sacar la foto">${ico('x')}</button>`)
     : `<button class="foto-btn ${oblig ? 'falta' : ''}" onclick="recFoto('${ruta}')">${ico('camara')}<span>${oblig ? 'Sacar foto *' : 'Sacar foto'}</span></button><button class="foto-ej" onclick='recFoto("${ruta}","${ej}",${JSON.stringify(extra || {})})'>Usar foto de ejemplo</button>`;
 }
 
@@ -5402,7 +5603,7 @@ const PASO_HTML = [
         <div><small>Baterías</small><b>${r.baterias.length}</b></div><div><small>Fotos</small><b>${fotos.length}</b></div>
         <div class="ancho"><small>Síntomas</small><b>${esc(r.frases.join(' · ') || r.sintCli || '—')}</b></div>
         <div class="ancho"><small>Responsable</small><b>${esc(nomUsuario(r.tec))}</b></div></div>
-      <div class="fotos mt">${fotos.slice(0, 12).map(f => `<div class="foto-m">${fotoHTML(f.foto)}<small>${f.t}</small></div>`).join('')}</div>
+      <div class="fotos mt">${fotos.slice(0, 12).map(f => fotoM(f.foto, f.t, 'Fotos de recepciones / ' + hoy().slice(0, 4) + ' / (orden nueva)')).join('')}</div>
       ${campo('Quién entrega el dron', `<input value="${esc(r.entrega)}" placeholder="Nombre de quien lo trae" oninput="recTxt('entrega',this.value)">`, { req:true })}
       <label class="conforme ${r.conforme ? 'on' : ''}"><input type="checkbox" ${r.conforme ? 'checked' : ''} onchange="recSet('conforme',this.checked)"><span>${ico('check')}</span>El cliente está conforme con el estado en que se recibe el equipo</label>`;
   }
@@ -5752,7 +5953,8 @@ function pintarOrden(v, id){
         <div class="tarjeta"><h4 class="lado-t">Recepción</h4>
           <div class="sint">${ico('alerta', 'chico')}<span>${esc(o.sintoma)}</span></div>${o.obs ? `<p class="peq muted mt-s">${esc(o.obs)}</p>` : ''}
           <div class="chk-l">${[['Valija', (k.valija || {}).estado || 'Bien'], ['Control', (k.control || {}).estado || 'Bien'], ['Tanque', (k.dron || {}).tanque || 'Bien'], ['Hub', (k.contenido || {}).hub || 'Sí'], ['Limpieza', (k.contenido || {}).limpieza || 'Normal'], ['Generador', (k.generador || {}).trae === 'Sí' ? k.generador.tipo : 'No trae']].map(([t, x]) => `<span><small>${t}</small><b class="${/daños|Pierde|No enciende|Sucia/.test(x) ? 'txt-rojo' : ''}">${esc(x)}</b></span>`).join('')}</div>
-          <div class="fotos mt-s">${(k.contenido ? fotosRec(k) : [{ foto:fotoEj('pantalla', 3), t:'Horas' }, { foto:Object.assign(fotoEj('dron', 7), { modelo:o.modelo }), t:'Frente' }]).slice(0, 6).map(f => `<div class="foto-m">${fotoHTML(f.foto)}<small>${f.t}</small></div>`).join('')}</div>
+          <div class="fotos mt-s">${fotosOrden(o).slice(0, 6).map(f => fotoM(f.foto, f.t, carpetaOrden(o))).join('')}</div>
+          <button class="link mt-s" onclick="verDrive('${carpetaOrden(o)}')">${ico('nube', 'chico')} Ver las fotos en Drive</button>
           <button class="link mt-s" onclick="comprobanteRecepcion('${o.id}')">${ico('imprimir', 'chico')} Comprobante de recepción</button></div>
       </aside>
       <section>
@@ -6117,7 +6319,7 @@ function listaProductos(l){
       <div class="der"><button class="btn btn-linea btn-sm" onclick="exportarStock()">${ico('descargar')} Excel</button></div></div>
     <div class="barra-filtros">${pildoras([['todos', 'Todos', l.length], ['nuevos', 'Nuevos'], ['usados', 'Usados', l.filter(p => p.usado).length], ['critico', 'Crítico', n('critico'), 'rojo'], ['minimo', 'Mínimo', n('minimo'), 'ambar']], STK.filtro, 'stkFiltro')}</div>
     ${tabla([
-      { t:'Producto', k:p => `<div class="celda-p"><span class="ap-tipo">${ico(icoCategoria(p.cat))}</span><span><b>${esc(p.nombre)}</b><small class="num">${p.cod}${p.modelos.length ? ' · ' + p.modelos.join(', ') : ''}</small></span></div>` },
+      { t:'Producto', k:p => `<div class="celda-p"><span class="ap-tipo ${p.foto ? 'con-foto' : ''}">${imgArticulo(p)}</span><span><b>${esc(p.nombre)}</b><small class="num">${p.cod}${p.modelos.length ? ' · ' + p.modelos.join(', ') : ''}</small></span></div>` },
       { t:'Categoría', k:p => `<span class="peq">${esc(p.cat)}</span>` },
       { t:'Ubicación', k:p => `<span class="num peq">${esc(p.ubic)}</span>` },
       { t:'Stock', k:p => { const e = estadoStock(p); return `<span class="chip c-${e.c}"><b class="num">${p.stock}</b>${e.k !== 'ok' ? ' · ' + e.t.toLowerCase() : ''}</span>`; }, cls:'cen' },
@@ -6138,7 +6340,8 @@ function exportarStock(){
 function fichaProductoModal(cod){
   const p = producto(cod), e = estadoStock(p), movs = D().movs.filter(m => m.cod === cod).slice(0, 30), u = !p.usado && producto(cod + '-' + D().config.letraUsado);
   abrirModal({ titulo:esc(p.nombre), sub:`<span class="num">${p.cod}</span> · ${esc(p.cat)} · ${p.prov}`, ancho:'ancho',
-    cuerpo:`<div class="pf-grid"><div class="pf-cod"><svg id="pf-bar"></svg><small>Se lee con la cámara de cualquier celular</small></div>
+    cuerpo:`<div class="pf-grid"><div class="pf-izq">${p.foto ? `<div class="pf-foto con-foto">${fotoM(p.foto, p.cod, 'Fotos de artículos')}</div>` : esJefe() ? `<button class="pf-foto pf-sin" onclick="fotoArticulo('${cod}')">${ico('camara')}<span>Agregar foto (opcional)</span></button>` : ''}
+        <div class="pf-cod"><svg id="pf-bar"></svg><small>Se lee con la cámara de cualquier celular</small></div></div>
       <div class="resumen pf-res"><div class="res azul"><small>Precio final con IVA</small><b class="num">${usd(p.precio)}</b>${verCostos() && p.costo ? `<span>Costo ${usd(p.costo)} · margen ${Math.round((p.precio / 1.22 - p.costo) / (p.precio / 1.22) * 100)} %</span>` : ''}</div>
         <div class="res ${e.k === 'ok' ? 'verde' : e.k === 'minimo' ? 'ambar' : 'rojo'}"><small>Disponible</small><b class="num">${p.stock}</b><span>${e.t}${p.usado ? '' : ` · mín. ${p.min} · crít. ${p.crit}`}</span></div>
         <div class="res"><small>Ubicación</small><b>${esc(p.ubic)}</b><span>Garantía ${p.garantia ? p.garantia + ' días' : '—'}</span></div>
@@ -6156,13 +6359,37 @@ function fichaProductoModal(cod){
 const TIPOS_MOV = { entrada:['Entrada por pedido', 'verde'], retiro:['Retiro aprobado', 'azul'], venta:['Venta', 'cielo'], devolucion:['Devolución', 'violeta'], altaUsado:['Alta de usado', 'verde'], ajuste:['Ajuste manual', 'ambar'] };
 const chipMov = m => chip((TIPOS_MOV[m.tipo] || [m.tipo])[0], (TIPOS_MOV[m.tipo] || [0, 'gris'])[1]);
 
+/* ---------- Foto del artículo (opcional): va a Drive › Fotos de artículos ---------- */
+// La foto si tiene; si no, el ícono de su categoría (como siempre)
+const imgArticulo = (p, tam) => p.foto ? fotoHTML(p.foto, 'art-foto') : ico(icoCategoria(p.cat), tam);
+const EJ_FOTO_CAT = { 'Motores':'motor', 'Baterías':'bateria', 'Cargadores':'bateria', 'Generadores':'generador', 'Pulverización':'tanque', 'Esparcido':'tanque', 'Control remoto':'control', 'Accesorios':'valija' };
+async function pedirFotoArticulo(p, ej){
+  const f = ej ? fotoEj(EJ_FOTO_CAT[p.cat] || 'caja') : await tomarFoto({ galeria:true, max:900 }); if (!f) return null;
+  f.drive = 'Fotos de artículos'; return f;
+}
+// Desde la ficha: saca o elige la foto y la guarda directo
+async function fotoArticulo(cod, ej){
+  const p = producto(cod), f = await pedirFotoArticulo(p, ej); if (!f) return;
+  p.foto = f; registrar('Agregó la foto del artículo', cod, 'stock'); guardar(); _cache = {};
+  avisar('Foto guardada en el Drive del taller', 'nube', { tilde:true }); fichaProductoModal(cod); if (SECCION === 'stock') ir('stock', true, true);
+}
+let FP_FOTO = null;
+function pintarFPFoto(){
+  const c = $('#fp-foto'); if (!c) return;
+  c.innerHTML = FP_FOTO ? `<div class="con-foto fp-prev">${fotoHTML(FP_FOTO, 'art-foto')}</div><div class="fp-acc"><button type="button" class="btn btn-linea btn-sm" onclick="fpFoto()">${ico('camara')} Cambiar</button><button type="button" class="btn btn-fantasma btn-sm" onclick="FP_FOTO=null;pintarFPFoto()">${ico('x')} Quitar</button></div>`
+    : `<button type="button" class="foto-btn" onclick="fpFoto()">${ico('camara')}<span>Sacar o elegir</span></button><div class="fp-acc"><small>Opcional. Se guarda en el Drive del taller y se ve en Stock, la tablet del mostrador y al escanear.</small><button type="button" class="foto-ej" onclick="fpFoto(true)">Usar foto de ejemplo</button></div>`;
+}
+async function fpFoto(ej){ const cat = ($('#f-prod [name=cat]') || {}).value; const f = await pedirFotoArticulo({ cat }, ej); if (f){ FP_FOTO = f; pintarFPFoto(); } }
+
 /* ---------- Alta y edición (el código de Dragur; si no tiene, la página genera uno) ---------- */
 function editarProducto(cod){
   const p = cod ? producto(cod) : { cod:'', nombre:'', cat:'Hélices', modelos:[], ubic:'', stock:0, min:D().config.stockMin, crit:D().config.stockCrit, costo:'', precio:'', garantia:D().config.garantiaRepuestoDias, prov:'Dragur' };
+  FP_FOTO = p.foto || null;
   abrirModal({ titulo:cod ? 'Editar producto' : 'Alta de producto', sub:cod ? p.cod : 'Usá el mismo código de Dragur: así el pedido y la factura se comparan sin traducir', ancho:'ancho',
     cuerpo:`<form id="f-prod">${grilla([
       campo('Código', `<div class="fila-in"><input name="cod" value="${esc(p.cod)}" ${cod ? 'readonly' : ''} placeholder="Ej.: T50P044" class="num">${cod ? '' : `<button type="button" class="btn btn-linea" onclick="$('#f-prod [name=cod]').value=codigoPropio()">Generar</button>`}</div>`, { req:true, ayuda:cod ? '' : 'Si no tiene código de Dragur, tocá «Generar».' }),
       campo('Nombre', inp('nombre', p.nombre), { req:true }),
+      campo('Foto del artículo', '<div class="fp-foto" id="fp-foto"></div>', { cls:'ancho' }),
       campo('Categoría', `<div class="fila-in">${sel('cat', CATEGORIAS(), p.cat)}<button type="button" class="btn btn-linea" onclick="nuevaCategoria()" title="Agregar una categoría">${ico('mas')} Nueva</button></div>`), campo('Proveedor', sel('prov', ['Dragur', 'Otro'], p.prov)),
       campo('Modelos compatibles', `<div class="frases chico" id="fp-modelos">${Object.keys(MODELOS).map(m => chkModelo(m, p.modelos.includes(m))).join('')}<button type="button" class="chk-mas" onclick="nuevoModeloProd()">${ico('mas', 'chico')} Otro modelo</button></div>`, { cls:'ancho' }),
       campo('Ubicación en el taller', inp('ubic', p.ubic)), campo('Stock actual', inp('stock', p.stock, 'number', cod ? 'readonly title="Para cambiarlo usá «Ajustar»"' : '')),
@@ -6171,10 +6398,10 @@ function editarProducto(cod){
       campo('Garantía (días)', inp('garantia', p.garantia, 'number')),
       campo('Códigos de barras del fabricante', inp('barras', (p.barras || []).join(', ')), { cls:'ancho', ayuda:'Opcional. El de la caja de DJI o del proveedor, si es distinto del código del artículo (separados por coma). También se asignan escaneando.' })])}</form>`,
     pie:`<button class="btn btn-linea" onclick="cerrarModal()">Cancelar</button><button class="btn btn-prim" id="fp-ok">${ico('check')} Guardar</button>`,
-    alAbrir:() => { $('#fp-ok').onclick = () => {
+    alAbrir:() => { pintarFPFoto(); $('#fp-ok').onclick = () => {
       const f = leerForm($('#f-prod')); if (!f.cod || !f.nombre || !f.precio){ error('Faltan el código, el nombre o el precio'); return; }
       if (!cod && producto(f.cod)){ error('Ese código ya existe'); return; }
-      const datos = { cod:f.cod.toUpperCase(), nombre:f.nombre, cat:f.cat, prov:f.prov, modelos:Object.keys(MODELOS).filter(m => f['m_' + m]), ubic:f.ubic, min:numero(f.min), crit:numero(f.crit), costo:numero(f.costo), precio:numero(f.precio), garantia:numero(f.garantia), barras:String(f.barras || '').split(/[,;\s]+/).map(x => x.trim()).filter(Boolean) };
+      const datos = { cod:f.cod.toUpperCase(), nombre:f.nombre, cat:f.cat, prov:f.prov, modelos:Object.keys(MODELOS).filter(m => f['m_' + m]), ubic:f.ubic, min:numero(f.min), crit:numero(f.crit), costo:numero(f.costo), precio:numero(f.precio), garantia:numero(f.garantia), barras:String(f.barras || '').split(/[,;\s]+/).map(x => x.trim()).filter(Boolean), foto:FP_FOTO };
       if (cod){ const antes = { precio:usd(p.precio) }; Object.assign(p, datos); p.cambio = { u:USUARIO, f:hoy(), h:hora() }; registrar('Editó el producto' + (antes.precio !== usd(datos.precio) ? ' (cambió el precio)' : ''), p.cod, 'stock', antes.precio !== usd(datos.precio) ? antes : null, antes.precio !== usd(datos.precio) ? { precio:usd(datos.precio) } : null); }
       else { D().productos.push(Object.assign({ stock:numero(f.stock), usado:false, creado:{ u:USUARIO, f:hoy(), h:hora() } }, datos)); registrar('Dio de alta el producto', datos.cod, 'stock'); }
       guardar(); _cache = {}; cerrarModal(); refrescar(); avisar(cod ? 'Producto actualizado' : 'Producto dado de alta: <b>' + esc(datos.cod) + '</b>', 'caja', { tilde:true });
@@ -6284,7 +6511,7 @@ RENDER.consulta = v => {
 };
 function fichaConsulta(p){
   const u = !p.usado && producto(p.cod + '-' + D().config.letraUsado), e = estadoStock(p);
-  return `<div class="cons-ficha"><div class="cf-foto">${ico(icoCategoria(p.cat))}</div>
+  return `<div class="cons-ficha"><div class="cf-foto ${p.foto ? 'con-foto' : ''}">${imgArticulo(p)}</div>
     <div class="cf-txt"><small class="num">${p.cod} · ${esc(p.cat)}</small><h2>${esc(p.nombre)}</h2>
       <div class="cf-precio"><b class="num" data-contar="${p.precio}" data-fmt="usd">${usd(p.precio)}</b><span>precio final con IVA</span></div>
       <div class="cf-disp ${p.stock ? '' : 'sin'}">${p.stock ? `<b class="num">${p.stock}</b> disponible${p.stock === 1 ? '' : 's'}` : 'Sin stock por ahora'}<span>· estante ${esc(p.ubic)}</span></div>
@@ -6813,7 +7040,7 @@ function pintarPedidoDragur(v, id){
       return `${i ? '<i></i>' : ''}<span class="${a === b2 || (k === 'completo' && ['parcial', 'diferencias'].includes(p.est)) ? 'on' : b2 < a ? 'hecho' : ''}">${b2 < a ? ico('check', 'chico') : ''}${k === 'completo' ? (p.est === 'diferencias' ? 'Con diferencias' : p.est === 'parcial' ? 'Recibido parcial' : 'Recibido') : EST_PED[k][0]}</span>`; }).join('')}</div>
     ${ctrl ? `<p class="ayuda-sec">${ico('info', 'chico')} Escaneá cada producto que llegó (suma 1) o escribí la cantidad. Cargá la factura de Dragur para comparar lo facturado.</p>` : ''}
     <div class="pd-fact tarjeta">${ico('factura')}<div class="campo"><label>Factura de Dragur</label>${ctrl ? `<input id="pd-fac" value="${esc(p.factura || '')}" placeholder="N° de factura" onchange="pdFactura('${id}',this.value)">` : `<b class="num">${esc(p.factura || '—')}</b>`}</div>
-      ${ctrl ? `<button class="btn btn-linea" onclick="pdLeerFactura('${id}')">${ico('descargar')} Subir el PDF (se guarda en Drive · Compras)</button>` : p.factura ? `<span class="sutil">${ico('ok', 'chico')} Guardada en Drive › Facturas de compras › ${(p.fRecibido || p.f).slice(0, 4)}</span>` : ''}</div>
+      ${ctrl ? `<button class="btn btn-linea" onclick="pdLeerFactura('${id}')">${ico('descargar')} Subir el PDF (se guarda en Drive · Compras)</button>` : p.factura ? `<button class="link" onclick="verDrive('${carpetaCompra(p)}','${p.id}')">${ico('nube', 'chico')} Guardada en Drive › ${carpetaCompra(p)}</button>` : ''}</div>
     ${tabla([
       { t:'Producto', k:l => { const pr = producto(l.cod) || {}; return `<div class="celda-p"><span><b>${esc(pr.nombre || l.cod)}</b><small class="num">${l.cod}</small></span></div>`; } },
       { t:'Pedido', k:l => `<b class="num">${l.noPedido ? 0 : l.cant}</b>`, cls:'cen' },
@@ -6822,7 +7049,7 @@ function pintarPedidoDragur(v, id){
       verCostos() ? { t:'Precio pedido / facturado', k:(l, i) => `<span class="num peq">${usd(l.precio || 0)}</span> / ${ctrl ? `<input class="cant-edit ancho" type="number" step="0.01" value="${l.precioFact == null ? '' : l.precioFact}" placeholder="igual" onchange="pdLinea('${id}',${i},'precioFact',this.value)">` : `<span class="num peq">${l.precioFact == null ? '=' : usd(l.precioFact)}</span>`}` } : null,
       { t:'Resultado', k:l => { const [t, c] = resultadoLinea(l); return chip(t, c); } },
       { t:'Observaciones y fotos', k:(l, i) => `${ctrl || p.est === 'diferencias' ? `<input class="obs-in" value="${esc(l.obs || '')}" placeholder="Observación" onchange="pdLinea('${id}',${i},'obs',this.value)">` : `<span class="peq">${esc(l.obs || '')}</span>`}
-          <div class="fotos mini">${(l.fotos || []).map(f => `<div class="foto-m">${fotoHTML(f)}<small>${fDM(f.f)} ${f.h}</small></div>`).join('')}${ctrl || p.est === 'diferencias' ? `<button class="foto-btn" onclick="pdFoto('${id}',${i})">${ico('camara')}</button>` : ''}</div>` }
+          <div class="fotos mini">${(l.fotos || []).map(f => fotoM(f, fDM(f.f) + ' ' + f.h, 'Fotos de pedidos / ' + p.num)).join('')}${ctrl || p.est === 'diferencias' ? `<button class="foto-btn" onclick="pdFoto('${id}',${i})">${ico('camara')}</button>` : ''}</div>` }
     ].filter(Boolean), p.lineas, { max:200 })}
     ${ctrl ? `<div class="pd-pie"><button class="btn btn-linea" onclick="pdNoPedido('${id}')">${ico('mas')} Llegó algo que no pedimos</button><button class="btn btn-linea" onclick="pdTodoOK('${id}')">${ico('check')} Llegó todo bien</button>
         <button class="btn btn-verde btn-xl" onclick="pdConfirmar('${id}')">${ico('check')} Confirmar la recepción</button></div>` : ''}
@@ -6835,11 +7062,12 @@ const pdP = id => D().pedidos.find(x => x.id === id);
 function pdLinea(id, i, k, v){ const l = pdP(id).lineas[i]; l[k] = k === 'obs' ? v : v === '' ? null : numero(v); guardar(); ir('pedidos', true, true); }
 function pdFactura(id, v){ pdP(id).factura = v; guardar(); }
 function pdEscanear(id, i){ const l = pdP(id).lineas[i]; l.recibido = (l.recibido || 0) + 1; sonido('escaner'); vibrar(50); guardar(); ir('pedidos', true, true); }
-async function pdFoto(id, i){ const f = await tomarFoto() || fotoEj('caja'); const l = pdP(id).lineas[i]; (l.fotos = l.fotos || []).push(f); guardar(); ir('pedidos', true, true); avisar('Foto guardada con fecha y hora: ' + fCorta(f.f) + ' ' + f.h, 'camara'); }
+async function pdFoto(id, i){ const f = await tomarFoto() || fotoEj('caja'); const l = pdP(id).lineas[i]; (l.fotos = l.fotos || []).push(f); guardar(); ir('pedidos', true, true); avisar('Foto guardada en el Drive del taller · ' + fCorta(f.f) + ' ' + f.h, 'nube'); }
 function pdTodoOK(id){ pdP(id).lineas.forEach(l => { if (l.recibido == null) l.recibido = l.cant; if (l.facturado == null) l.facturado = l.recibido; }); guardar(); ir('pedidos', true, true); }
 function pdLeerFactura(id){
   const p = pdP(id); p.factura = p.factura || 'Dragur 00-' + (128460 + Math.floor(Math.random() * 90)); p.lineas.forEach(l => { if (l.facturado == null) l.facturado = l.cant; });
-  registrar('Subió la factura de Dragur', p.num, 'pedidos'); guardar(); ir('pedidos', true, true); avisar('Factura leída: <b>' + esc(p.factura) + '</b> · cantidades facturadas completadas', 'factura', { tilde:true });
+  registrar('Subió la factura de Dragur y la guardó en Drive', p.num, 'pedidos'); guardar(); ir('pedidos', true, true);
+  avisar('Factura <b>' + esc(p.factura) + '</b> guardada en Drive · cantidades facturadas completadas', 'factura', { tilde:true, accion:'Ver en Drive', alTocar:() => verDrive(carpetaCompra(p), p.id) });
 }
 function pdNoPedido(id){
   abrirModal({ titulo:'Llegó algo que no pedimos', cuerpo:`<input id="np-q" class="campo-q" placeholder="Código o nombre">`, alAbrir:() => autocompletar($('#np-q'), q => opcProductos(q), x => {
@@ -6939,7 +7167,7 @@ async function leerFacturaArchivo(file){
       ${grilla([campo('N° de factura', `<input id="fs-num" value="${esc(datos.num)}">`, { req:true }), campo('Fecha', `<input id="fs-f" type="date" value="${datos.f}">`),
         campo('Vencimiento', `<input id="fs-v" type="date" value="${sumarDias(datos.f, D().config.plazoPago)}">`), campo('Total USD', `<input id="fs-t" type="number" step="0.01" value="${datos.total || SUBIDA.esperado}">`)])}
       ${difiere ? `<div class="aviso-linea rojo mt">${ico('alerta')}<span>El total de la factura (${usd(datos.total)}) <b>no coincide</b> con ${SUBIDA.tipo === 'venta' ? 'la venta' : 'el reporte'} (${usd(SUBIDA.esperado)}).</span></div>` : ''}
-      <div class="drive mt">${ico('nota')}<div><small>Se guarda en el Google Drive del taller</small><b>Facturas de venta / ${datos.f.slice(0, 4)} / ${datos.f.slice(5, 7)} / ${esc(nombre)}</b></div></div>
+      <div class="drive mt">${ico('nube')}<div><small>Se guarda en el Google Drive del taller</small><b>Facturas de venta / ${datos.f.slice(0, 4)} / ${datos.f.slice(5, 7)} / ${esc(nombre)}</b></div></div>
       <button class="btn btn-verde btn-xl mt" style="width:100%" onclick="guardarFactura('${esc(nombre)}')">${ico('check')} Guardar factura</button></div></div>`;
   dibujarPDF(buf, $('#fs-prev'), 1);
 }
@@ -6951,10 +7179,12 @@ async function dibujarPDF(buf, caja, max){
     await p.render({ canvasContext:c.getContext('2d'), viewport:vp }).promise; caja.appendChild(c);
   }
 }
-function guardarFactura(nombre){
+async function guardarFactura(nombre){
   const S = SUBIDA, num = $('#fs-num').value.trim(); if (!num){ error('Falta el N° de factura'); return; }
-  const fac = { id:'f' + Date.now().toString(36), num, f:$('#fs-f').value, venc:$('#fs-v').value, cli:S.cli, tipo:S.tipo, ref:S.id, total:numero($('#fs-t').value), pagos:[], recargos:[],
-    pdf:{ nombre, carpeta:'Facturas de venta / ' + $('#fs-f').value.slice(0, 4) + ' / ' + $('#fs-f').value.slice(5, 7) }, creado:{ u:USUARIO, f:hoy(), h:hora() } };
+  const fF = $('#fs-f').value, fV = $('#fs-v').value, fT = $('#fs-t').value, carpeta = 'Facturas de venta / ' + fF.slice(0, 4) + ' / ' + fF.slice(5, 7);
+  await subiendoDrive($('#subir-res'), nombre, carpeta);
+  const fac = { id:'f' + Date.now().toString(36), num, f:fF, venc:fV, cli:S.cli, tipo:S.tipo, ref:S.id, total:numero(fT), pagos:[], recargos:[],
+    pdf:{ nombre, carpeta }, creado:{ u:USUARIO, f:hoy(), h:hora() } };
   D().numFac = Math.max(D().numFac || 0, Number(num.replace(/\D/g, '')) || 0);
   _pdfs[fac.id] = URL.createObjectURL(S.blob);
   D().facturas.unshift(fac);
@@ -6962,7 +7192,7 @@ function guardarFactura(nombre){
   if (S.tipo === 'venta'){ const v = D().ventas.find(x => x.id === S.id); v.factura = fac.id; if (v.pago === 'contado') fac.pagos.push({ f:fac.f, monto:fac.total, forma:'Contado', u:USUARIO }); else fac.venc = v.venc || fac.venc; }
   if (S.tipo === 'bateria'){ const b = D().baterias.find(x => x.id === S.id); b.factura = fac.id; b.hist.push({ f:hoy(), h:hora(), u:USUARIO, a:'Cargó la factura ' + num }); }
   registrar('Cargó la factura ' + num + ' y la guardó en Drive', S.ref, 'facturacion'); guardar(); _cache = {};
-  SUBIDA = null; cerrarModal(); refrescar(); avisar(`Factura <b>${esc(num)}</b> guardada en Drive`, 'factura', { tilde:true });
+  SUBIDA = null; cerrarModal(); refrescar(); avisar(`Factura <b>${esc(num)}</b> guardada en Drive`, 'factura', { tilde:true, accion:'Ver en Drive', alTocar:() => verDrive(carpeta, fac.id) });
 }
 // Factura de ejemplo (para la demo y para las facturas que ya estaban cargadas)
 async function pdfFacturaEjemplo(o){
@@ -6975,13 +7205,13 @@ async function pdfFacturaEjemplo(o){
 }
 function bloqueFactura(f){
   const e = estadoFactura(f);
-  return `<div class="fac-bloque"><span class="ap-tipo">${ico('factura')}</span><div><b class="num">${esc(f.num)}</b><small>${fCorta(f.f)} · vence ${fCorta(f.venc)} · ${usd(f.total)}${saldoFactura(f) > .01 ? ' · debe ' + usd(saldoFactura(f)) : ''}</small><small class="sutil">Drive › ${esc(f.pdf ? f.pdf.carpeta : 'Facturas de venta')}</small></div>${chip(e.t, e.c)}
+  return `<div class="fac-bloque"><span class="ap-tipo">${ico('factura')}</span><div><b class="num">${esc(f.num)}</b><small>${fCorta(f.f)} · vence ${fCorta(f.venc)} · ${usd(f.total)}${saldoFactura(f) > .01 ? ' · debe ' + usd(saldoFactura(f)) : ''}</small><button class="link peq" onclick="verDrive('${esc(carpetaFactura(f))}','${f.id}')">${ico('nube', 'chico')} Drive › ${esc(carpetaFactura(f))}</button></div>${chip(e.t, e.c)}
     <button class="btn btn-linea btn-sm" onclick="verFactura('${f.id}')">${ico('ojo')} Ver</button></div>`;
 }
 async function verFactura(id){
   const f = D().facturas.find(x => x.id === id);
-  abrirModal({ titulo:'Factura ' + esc(f.num), sub:esc(nomCli(f.cli)) + ' · ' + esc(f.pdf ? f.pdf.nombre : ''), ancho:'ancho modal-doc', cuerpo:`<div class="fac-visor" id="fac-visor">${esqueleto(6)}</div>`,
-    pie:`<button class="btn btn-linea" onclick="avisar('En la versión real abre el archivo en el Google Drive del taller','nota')">${ico('nota')} Abrir en Drive</button><button class="btn btn-prim" id="fv-desc">${ico('descargar')} Descargar</button>` });
+  abrirModal({ titulo:'Factura ' + esc(f.num), sub:esc(nomCli(f.cli)) + ' · ' + esc(nombreFactura(f)), ancho:'ancho modal-doc', cuerpo:`<div class="fac-visor" id="fac-visor">${esqueleto(6)}</div>`,
+    pie:`<button class="btn btn-linea" onclick="verDrive('${esc(carpetaFactura(f))}','${f.id}')">${ico('nube')} Abrir en Drive</button><button class="btn btn-prim" id="fv-desc">${ico('descargar')} Descargar</button>` });
   let url = _pdfs[id];
   if (!url){ const d = await pdfFacturaEjemplo({ num:f.num, f:f.f, cli:f.cli, total:f.total, ref:f.tipo === 'orden' ? (orden(f.ref) || {}).num : (D().ventas.find(v => v.id === f.ref) || D().baterias.find(b => b.id === f.ref) || {}).num }); url = _pdfs[id] = URL.createObjectURL(d.output('blob')); }
   const buf = await (await fetch(url)).arrayBuffer(); dibujarPDF(buf, $('#fac-visor'));
@@ -6994,7 +7224,7 @@ function listaFacturas(){
   const l = todas.filter(f => { const k = estadoFactura(f).k; return (FAC.est === 'todas' || FAC.est === 'abiertas' && k !== 'pagada' || k === FAC.est || FAC.est === 'vencida' && k === 'recargo') && (!s || sinTildes(f.num + ' ' + nomCli(f.cli)).includes(s)); }).sort((a, b) => b.f.localeCompare(a.f));
   const n = k => todas.filter(f => estadoFactura(f).k === k).length;
   return `<div class="barra-filtros">${pildoras([['abiertas', 'Sin cobrar', todas.filter(f => estadoFactura(f).k !== 'pagada').length], ['pendiente', 'Pendientes', n('pendiente'), 'ambar'], ['vencida', 'Vencidas', n('vencida') + n('recargo'), 'rojo'], ['pagada', 'Pagadas', n('pagada'), 'verde'], ['todas', 'Todas', todas.length]], FAC.est, 'facEst')}</div>
-    <div class="barra-filtros">${buscadorLocal('fac-q', FAC.q, 'Buscar factura o cliente…', 'facBuscar')}<div class="der"><button class="btn btn-linea btn-sm" onclick="exportarFacturas()">${ico('descargar')} Excel</button></div></div>
+    <div class="barra-filtros">${buscadorLocal('fac-q', FAC.q, 'Buscar factura o cliente…', 'facBuscar')}<div class="der"><button class="btn btn-linea btn-sm" onclick="verDrive('Facturas de venta')">${ico('nube')} Carpeta en Drive</button><button class="btn btn-linea btn-sm" onclick="exportarFacturas()">${ico('descargar')} Excel</button></div></div>
     ${tabla([{ t:'Factura', k:f => `<div class="celda-p"><span class="ap-tipo">${ico('factura')}</span><span><b class="num">${esc(f.num)}</b><small>${fCorta(f.f)} · ${{ orden:'Reparación', venta:'Venta', bateria:'Batería' }[f.tipo]}</small></span></div>` },
       { t:'Cliente', k:f => esc(nomCli(f.cli)) }, { t:'Vence', k:f => `<span class="num ${estadoFactura(f).c === 'rojo' ? 'txt-rojo' : ''}">${fCorta(f.venc)}</span>` },
       { t:'Total', k:f => `<span class="num">${usd(f.total)}</span>`, cls:'der' }, { t:'Recargos', k:f => recargos(f) ? `<span class="num txt-rojo">${usd(recargos(f))}</span>` : '', cls:'der' },
@@ -7478,7 +7708,7 @@ avisosDe = function(uid){
    ===================================================================== */
 const CFG = { grupo:null, q:'', resaltar:null, uabierto:null, ufiltro:'todos' };
 const CONFIG_EXTRA = { descuentos:'jefes', dragurTel:'099 000 111', dragurMail:'pedidos@dragur.com.uy', etiqueta:{ tam:'58 × 32 mm', tipo:'barras' }, sonido:true, fotosOblig:true,
-  verEsteban:{ telefono:false, recibio:false, precios:false }, drive:{ cuenta:'dronesdelpampa.facturas@gmail.com', carpeta:'Facturas de venta', compras:'Facturas de compras' },
+  verEsteban:{ telefono:false, recibio:false, precios:false }, drive:{ cuenta:'pagina.dronesdelpampa@gmail.com', carpeta:'Facturas de venta', compras:'Facturas de compras' },
   avisos:{ dron:true, bateria:true, aprobar:true, stock:true, cobros:true, atrasadas:true, garantia:true },
   textos:{ cobro:'Hola {contacto}, te recordamos que tenés facturas pendientes por {saldo}.', listo:'Hola {contacto}, tu {dron} ya está listo para retirar.' } };
 const cfgGet = r => { let o = D().config, b = Object.assign({}, CONFIG_INICIAL, CONFIG_EXTRA); for (const k of r.split('.')){ o = o == null ? undefined : o[k]; b = b == null ? undefined : b[k]; } return o === undefined ? b : o; };
@@ -7496,7 +7726,7 @@ const CONFIG_GRUPOS = [
     { k:'taller.nombre', t:'Nombre', d:'Sale en todos los documentos', tipo:'txt', def:NEGOCIO.nombre }, { k:'taller.rut', t:'RUT', d:'⚠ Falta el RUT real', tipo:'txt', def:NEGOCIO.rut },
     { k:'taller.dir', t:'Dirección', d:'⚠ Falta la dirección real', tipo:'txt', def:NEGOCIO.direccion }, { k:'taller.tel', t:'Teléfono', d:'⚠ Falta el teléfono real', tipo:'txt', def:NEGOCIO.tel },
     { k:'fondoIngreso', t:'Fondo de la pantalla de ingreso', d:'El dibujo que se ve detrás de la lista de usuarios. Cambia para todos los usuarios.', tipo:'sel', ops:Object.entries(FONDOS_INGRESO).map(([k, x]) => [k, x.t + (k === 'amanecer' ? ' (predeterminado)' : '')]), def:'amanecer' },
-    { k:'drive.cuenta', t:'Google Drive conectado', d:'Las facturas en PDF se guardan acá, en carpetas por año y mes. Se conecta una sola vez.', tipo:'drive' },
+    { k:'drive.cuenta', t:'Google Drive del taller', d:'Una cuenta de Google del taller, solo para la página: ahí se guardan las facturas, las fotos y los respaldos de todos los días. Wydan tiene acceso para controlar que los respaldos se hagan.', tipo:'drive' },
     { k:'dragurTel', t:'WhatsApp de Dragur', d:'Para mandar pedidos y reportes de diferencias', tipo:'txt' }, { k:'dragurMail', t:'Email de Dragur', d:'Para mandar el pedido por mail', tipo:'txt' }] },
   { id:'usuarios', t:'Usuarios y permisos', ico:'equipo', d:'Hasta 10 usuarios, tipos, permisos, Mi espacio y quién ve la actividad', especial:'usuarios' },
   { id:'aprobaciones', t:'Aprobaciones', ico:'aprobar', d:'Qué necesita aprobación y quién aprueba', especial:'aprobaciones' },
@@ -7557,7 +7787,10 @@ function opcionCfg(o){
   else if (o.tipo === 'area') ctl = `<textarea class="cfg-area" onchange="cfgCambio('${o.k}', this.value)">${esc(v)}</textarea>`;
   else if (o.tipo === 'lista') ctl = `<div class="cfg-lista">${(v || []).map((x, i) => `<span class="tag-d">${esc(x)}<button onclick="cfgListaQuitar('${o.k}',${i})">${ico('x', 'chico')}</button></span>`).join('')}<button class="btn btn-suave btn-sm" onclick="cfgListaAgregar('${o.k}')">${ico('mas')} Agregar</button></div>`;
   else if (o.tipo === 'modelos') ctl = `<div class="cfg-lista">${Object.keys(MODELOS).map(m => `<span class="tag-d">${esc(modeloTxt(m))} · ${MODELOS[m].motores} motores${(D().config.modelosExtra || {})[m] ? `<button onclick="quitarModelo('${m}')" title="Quitar">${ico('x', 'chico')}</button>` : ''}</span>`).join('')}<button class="btn btn-suave btn-sm" onclick="agregarModelo(() => ir('config', true, true))">${ico('mas')} Agregar modelo</button></div>`;
-  else if (o.tipo === 'drive') ctl = `<div class="drive">${ico('nota')}<div><small>Conectado</small><b>${esc(cfgGet('drive.cuenta'))}</b><small>Carpetas: ${esc(cfgGet('drive.carpeta'))} · ${esc(cfgGet('drive.compras'))}</small></div></div>`;
+  else if (o.tipo === 'drive') ctl = `<div class="drive drive-cfg">${ico('nube')}<div><small>Conectado · cuenta del taller (de ejemplo)</small><b>${esc(cfgGet('drive.cuenta'))}</b>
+      <small>Compartido con Wydan Solutions · respaldo todos los días a las 23:00 (último: hoy)</small>
+      <div class="drv-chips">${DRIVE_CARPETAS.map(([n, i]) => `<button type="button" onclick="verDrive('${n}')">${ico(i, 'chico')} ${n}</button>`).join('')}</div></div>
+      <button type="button" class="btn btn-linea btn-sm" onclick="verDrive('')">${ico('abrir')} Abrir el Drive</button></div>`;
   else ctl = `<input class="cfg-txt" value="${esc(v || '')}" onchange="cfgCambio('${o.k}', this.value, false, this)">`;
   return `<div class="fila-int ${o.si ? 'sub' : ''} ${['lista', 'area', 'drive'].includes(o.tipo) ? 'col' : ''}" data-k="${o.k}"><div><b>${o.t}</b>${o.d ? `<small>${o.d}</small>` : ''}</div>${ctl}</div>`;
 }
