@@ -2695,6 +2695,8 @@ function estadoStock(p){
   if (p.stock < p.min) return { k:'minimo', t:'Stock mínimo', c:'ambar' };
   return { k:'ok', t:'Disponible', c:'verde' };
 }
+// Ubicación en palabras: «G2-E5» → «Góndola 2 · Estante 5» (si tiene otro formato, tal cual)
+const ubicTxt = u => { const m = /^G\s*(\d+)\s*-\s*E\s*(\d+)$/i.exec(String(u || '').trim()); return m ? `Góndola ${m[1]} · Estante ${m[2]}` : String(u || '—'); };
 const stockBajo = () => memo('stockBajo', () => D().productos.filter(p => !p.inactivo && estadoStock(p).k !== 'ok').sort((a, b) => a.stock - b.stock));
 
 /* ---------- Aprobaciones ---------- */
@@ -5096,7 +5098,7 @@ function buscar(q){
   }
   if (puedeVer('stock') && tipo() !== 'externo'){
     const prs = D().productos.filter(p => !p.inactivo && has(p.cod, p.nombre, p.cat)).slice(0, 6);
-    if (prs.length) g.push(['Repuestos y productos', prs.map(p => ['caja', `${p.cod} · ${p.nombre}`, `${usd(p.precio)} · ${p.stock} disponible${p.stock === 1 ? '' : 's'} · ${p.ubic}`, typeof fichaProductoModal === 'function' ? `ir('stock');fichaProductoModal(${jsArg(p.cod)})` : `mostrarProductoEscaneado(${jsArg(p.cod)})`])]);
+    if (prs.length) g.push(['Repuestos y productos', prs.map(p => ['caja', `${p.cod} · ${p.nombre}`, `${usd(p.precio)} · ${p.stock} disponible${p.stock === 1 ? '' : 's'} · ${ubicTxt(p.ubic)}`, typeof fichaProductoModal === 'function' ? `ir('stock');fichaProductoModal(${jsArg(p.cod)})` : `mostrarProductoEscaneado(${jsArg(p.cod)})`])]);
   }
   if (puedeVer('baterias')){
     const bts = D().baterias.filter(b => !b.anulado && has(b.num, b.serie, nomCli(b.cli))).slice(0, 4);
@@ -5419,7 +5421,7 @@ function fichaProducto(p){
   return `<div class="esc-ficha prod"><div class="esc-foto ${p.foto ? 'con-foto' : ''}">${imgArticulo(p, 'grande')}</div>
     <div class="esc-datos"><small>${p.cod} · ${esc(p.cat)}</small><h3>${esc(p.nombre)}</h3>
       <div class="esc-precio"><b class="num">${usd(p.precio)}</b><span>precio final con IVA</span></div>
-      <div class="esc-disp"><span class="chip c-${e.c}"><i class="punto"></i>${p.stock} disponible${p.stock === 1 ? '' : 's'}</span><span>${ico('ubicacion', 'chico')} Estante ${esc(p.ubic)}</span>${verCostos() && p.costo ? `<span class="sutil">Costo ${usd(p.costo)}</span>` : ''}</div>
+      <div class="esc-disp"><span class="chip c-${e.c}"><i class="punto"></i>${p.stock} disponible${p.stock === 1 ? '' : 's'}</span><span>${ico('ubicacion', 'chico')} ${esc(ubicTxt(p.ubic))}</span>${verCostos() && p.costo ? `<span class="sutil">Costo ${usd(p.costo)}</span>` : ''}</div>
       ${u ? `<div class="esc-usado"><span>Usado <b>${u.cod}</b></span><b class="num">${usd(u.precio)}</b><span>${u.stock} disponible${u.stock === 1 ? '' : 's'}</span></div>` : ''}
       ${acc.length ? `<div class="esc-acc">${acc.join('')}</div>` : ''}</div></div>`;
 }
@@ -6087,7 +6089,7 @@ function limpiarListas(){ $$('.ac-lista').forEach(c => c.remove()); }
 const opcClientes = q => { const s = sinTildes(q); return D().clientes.filter(c => !c.inactivo).filter(c => !s || sinTildes(c.nombre + ' ' + (c.fantasia || '') + ' ' + c.doc).includes(s)).map(c => ({ v:c.id, t:c.nombre, s:datosCli(c), ico:'clientes' })); };
 const opcProductos = (q, soloModelo) => { const s = sinTildes(q); if (!s) return [];
   return D().productos.filter(p => !p.inactivo && sinTildes(p.cod + ' ' + p.nombre + ' ' + p.cat).includes(s)).sort((a, b) => (soloModelo && b.modelos.includes(soloModelo)) - (soloModelo && a.modelos.includes(soloModelo)))
-    .map(p => ({ v:p.cod, t:p.cod + ' · ' + p.nombre, s:usd(p.precio) + ' · ' + p.stock + ' disponible' + (p.stock === 1 ? '' : 's') + ' · ' + p.ubic, ico:icoCategoria(p.cat) })); };
+    .map(p => ({ v:p.cod, t:p.cod + ' · ' + p.nombre, s:usd(p.precio) + ' · ' + p.stock + ' disponible' + (p.stock === 1 ? '' : 's') + ' · ' + ubicTxt(p.ubic), ico:icoCategoria(p.cat) })); };
 
 /* ---------- Botones grandes de opción (Sí/No, Bien/Con daños) ---------- */
 function opciones(nombre, lista, valor, fn){
@@ -7639,7 +7641,7 @@ function listaProductos(l, bajas){
     ${tabla([
       { t:'Producto', k:p => `<div class="celda-p"><span class="ap-tipo ${p.foto ? 'con-foto' : ''}">${imgArticulo(p)}</span><span><b>${esc(p.nombre)}</b><small class="num">${p.cod}${p.modelos.length ? ' · ' + p.modelos.join(', ') : ''}</small></span></div>` },
       { t:'Categoría', k:p => `<span class="peq">${esc(p.cat)}</span>` },
-      { t:'Ubicación', k:p => `<span class="num peq">${esc(p.ubic)}</span>` },
+      { t:'Ubicación', k:p => `<span class="peq">${esc(ubicTxt(p.ubic))}</span>` },
       { t:'Stock', k:p => { if (p.inactivo) return chip('Dado de baja', 'gris'); const e = estadoStock(p); return `<span class="chip c-${e.c}"><b class="num">${p.stock}</b>${e.k !== 'ok' ? ' · ' + e.t.toLowerCase() : ''}</span>`; }, cls:'cen' },
       { t:'Mín. / crít.', k:p => p.usado ? '<span class="sutil">—</span>' : `<span class="num peq">${p.min} / ${p.crit}</span>`, cls:'cen' },
       { t:'Precio final', k:p => `<b class="num">${usd(p.precio)}</b>`, cls:'der' },
@@ -7682,7 +7684,7 @@ function fichaProductoModal(cod){
         <div class="pf-cod"><svg id="pf-bar"></svg><small>Se lee con la cámara de cualquier celular</small></div></div>
       <div class="resumen pf-res"><div class="res azul"><small>Precio final con IVA</small><b class="num">${usd(p.precio)}</b>${verCostos() && p.costo ? `<span>Costo ${usd(p.costo)} sin IVA${margen != null ? ` · margen ${margen} %` : ''}</span>` : ''}</div>
         <div class="res ${e.k === 'ok' ? 'verde' : e.k === 'minimo' ? 'ambar' : 'rojo'}"><small>Disponible</small><b class="num">${p.stock}</b><span>${e.t}${p.usado ? '' : ` · mín. ${p.min} · crít. ${p.crit}`}</span></div>
-        <div class="res"><small>Ubicación</small><b>${esc(p.ubic || '—')}</b><span>Garantía ${p.garantia ? p.garantia + ' días' : '—'}</span></div>
+        <div class="res"><small>Ubicación</small><b>${esc(ubicTxt(p.ubic))}</b><span>Garantía ${p.garantia ? p.garantia + ' días' : '—'}</span></div>
         ${u ? `<div class="res"><small>Usado ${u.cod}</small><b class="num">${usd(u.precio)}</b><span>${u.stock} disponible${u.stock === 1 ? '' : 's'}${u.inactivo ? ' · dado de baja' : ''}</span></div>` : ''}</div></div>
       ${p.modelos.length ? `<p class="peq muted">Compatible con: ${p.modelos.map(modeloTxt).join(', ')}</p>` : ''}
       ${(p.barras || []).length ? `<p class="peq muted">Códigos de barras del fabricante: <span class="num">${p.barras.map(esc).join(', ')}</span></p>` : ''}
@@ -7755,7 +7757,7 @@ function editarProducto(cod, usadoDe){
       campo('Foto del artículo', '<div class="fp-foto" id="fp-foto"></div>', { cls:'ancho' }),
       campo('Categoría', `<div class="fila-in">${sel('cat', CATEGORIAS(), p.cat)}<button type="button" class="btn btn-linea" onclick="nuevaCategoria()" title="Agregar una categoría">${ico('mas')} Nueva</button></div>`), campo('Proveedor', sel('prov', PROVEEDORES(), p.prov || 'Dragur'), { ayuda:'Solo los de Dragur se suman solos al pedido a Dragur.' }),
       campo('Modelos compatibles', `<div class="frases chico" id="fp-modelos">${Object.keys(MODELOS).map(m => chkModelo(m, p.modelos.includes(m))).join('')}<button type="button" class="chk-mas" onclick="nuevoModeloProd()">${ico('mas', 'chico')} Otro modelo</button></div>`, { cls:'ancho' }),
-      campo('Ubicación en el taller', inp('ubic', p.ubic)), campo('Stock actual', inp('stock', p.stock, 'number', cod ? 'readonly title="Para cambiarlo usá «Ajustar»"' : 'min="0"'), { ayuda:cod ? 'Para cambiarlo usá «Ajustar» (queda registrado con el motivo).' : 'Queda como movimiento «Stock inicial».' }),
+      campo('Ubicación en el taller', inp('ubic', p.ubic), { ayuda:'Góndola y estante: G2-E5 = Góndola 2, Estante 5.' }), campo('Stock actual', inp('stock', p.stock, 'number', cod ? 'readonly title="Para cambiarlo usá «Ajustar»"' : 'min="0"'), { ayuda:cod ? 'Para cambiarlo usá «Ajustar» (queda registrado con el motivo).' : 'Queda como movimiento «Stock inicial».' }),
       esUsado ? '' : campo('Stock mínimo', inp('min', p.min, 'number', 'min="0"'), { ayuda:'Amarillo: hay que reponer.' }), esUsado ? '' : campo('Stock crítico', inp('crit', p.crit, 'number', 'min="0"'), { ayuda:'Rojo: aviso urgente.' }),
       verCostos() ? campo('Costo USD sin IVA (solo Claudio y Florencia)', inp('costo', p.costo, 'number', 'step="0.01" min="0"')) : '', campo('Precio final USD con IVA', inp('precio', p.precio, 'number', 'step="0.01" min="0"'), { req:true }),
       campo('Garantía (días)', inp('garantia', p.garantia, 'number', 'min="0"')),
@@ -7936,7 +7938,7 @@ function etiquetas(){
       <button class="btn btn-prim btn-xl mt" ${STK.selEt.length ? '' : 'disabled'} onclick="imprimirEtiquetas()">${ico('imprimir')} Imprimir ${STK.selEt.length || ''} etiqueta${STK.selEt.length === 1 ? '' : 's'}</button></div>
     <div><h4 class="lado-t">Vista previa${STK.selEt.length > 40 ? ` · las primeras 40 de ${STK.selEt.length}` : ''}</h4><div class="etiquetas" id="et-prev" style="--et-w:${T.w * 3.8}px;--et-h:${T.h * 3.8}px">${STK.selEt.slice(0, 40).map(etiquetaHTML).join('')}</div></div></div>`;
 }
-const etiquetaHTML = c => { const p = producto(c); if (!p) return ''; return `<div class="etq"><b>${esc(p.nombre)}</b><svg data-cod="${esc(c)}"></svg><small>${esc(c)} · ${esc(p.ubic || '')} · ${usd(p.precio)}</small></div>`; };
+const etiquetaHTML = c => { const p = producto(c); if (!p) return ''; return `<div class="etq"><b>${esc(p.nombre)}</b><svg data-cod="${esc(c)}"></svg><small>${esc(c)} · ${esc(ubicTxt(p.ubic))} · ${usd(p.precio)}</small></div>`; };
 function dibujarEtiquetas(){
   autocompletar($('#et-q'), q => opcProductos(q), x => { if (!STK.selEt.includes(x.v)) STK.selEt.push(x.v); ir('stock', true, true); setTimeout(() => $('#et-q').focus(), 50); });
   const T = tamEtiqueta(), alto = Math.max(20, Math.round(T.h * 1.3));
@@ -7984,7 +7986,7 @@ function fichaConsulta(p){
   return `<div class="cons-ficha"><div class="cf-foto ${p.foto ? 'con-foto' : ''}">${imgArticulo(p)}</div>
     <div class="cf-txt"><small class="num">${p.cod} · ${esc(p.cat)}</small><h2>${esc(p.nombre)}</h2>
       <div class="cf-precio"><b class="num" data-contar="${p.precio}" data-fmt="usd">${usd(p.precio)}</b><span>precio final con IVA</span></div>
-      <div class="cf-disp ${p.stock && !p.inactivo ? '' : 'sin'}">${p.inactivo ? 'Ya no se vende' : p.stock ? `<b class="num">${p.stock}</b> disponible${p.stock === 1 ? '' : 's'}` : 'Sin stock por ahora'}<span>· estante ${esc(p.ubic)}</span></div>
+      <div class="cf-disp ${p.stock && !p.inactivo ? '' : 'sin'}">${p.inactivo ? 'Ya no se vende' : p.stock ? `<b class="num">${p.stock}</b> disponible${p.stock === 1 ? '' : 's'}` : 'Sin stock por ahora'}<span>· ${esc(ubicTxt(p.ubic))}</span></div>
       ${u ? `<div class="cf-usado"><span>También hay <b>usado</b></span><b class="num">${usd(u.precio)}</b><span>${u.stock} disponible${u.stock === 1 ? '' : 's'}</span></div>` : ''}
       ${p.modelos.length ? `<p class="cf-mod">Para ${p.modelos.map(modeloTxt).join(' · ')}</p>` : ''}</div>
     <button class="btn btn-linea cf-otra" onclick="CONS={cod:null,q:''};ir('consulta',true,true);setTimeout(()=>$('#cons-q').focus(),50)">${ico('volver')} Otra consulta</button></div>`;
