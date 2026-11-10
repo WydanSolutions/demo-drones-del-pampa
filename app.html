@@ -1193,7 +1193,10 @@ html[data-tema="oscuro"] .col{background:#121A28}
 body.cel .rec{grid-template-columns:1fr}
 body.cel .rec-pasos{display:none}
 body.cel .rec-caja{padding:16px;border-radius:20px}
-body.cel .rec-pie{position:sticky;bottom:calc(76px + env(safe-area-inset-bottom));background:var(--carta);margin:20px -16px -16px;padding:12px 16px;border-radius:0 0 20px 20px;z-index:5}
+/* En el celular el pie va al final del paso, en su lugar: nunca encima de los campos (antes quedaba «pegado» y tapaba opciones y fotos) */
+body.cel .rec-pie{position:static;margin-top:22px;padding-top:16px}
+.falta-aca{border-radius:14px;animation:faltaAca 1.6s ease 2}
+@keyframes faltaAca{0%,100%{box-shadow:0 0 0 0 transparent}30%{box-shadow:0 0 0 5px var(--rojo-f),0 0 0 7px var(--rojo)}}
 body.cel .rec-pie .btn{flex:1;min-width:0}
 body.cel .rec-sig{min-width:0}
 body.cel .rb-g{grid-template-columns:1fr}
@@ -6587,7 +6590,8 @@ const PASO_HTML = [
       ${r.dron.solido === 'Sí' ? `${campo('Estado del tanque de sólido', opciones('dron.tanqueSol', [['Bien', 'Bien', 'ok'], ['Con daños', 'Con daños', 'mal']], r.dron.tanqueSol, 'recOpc'))}<div class="fotos">${slotFoto('dron.fotoSol', r.dron.fotoSol, 'Tanque sólido', 'tanque', true)}</div>` : ''}
       <div class="campo"><label>Motores · ${r.dron.motores.length} según el modelo <b class="req">*</b></label><div class="motores">${r.dron.motores.map((m, i) => `<div class="motor ${m.rev ? 'rev' : ''}">
         <button class="mt-rev" onclick="recMotor(${i})">${m.rev ? ico('check') : ''}</button><b>M${i + 1}</b>
-        <div class="mt-res">${['OK', 'Ruido', 'Vibración', 'No gira'].map(x => `<button class="${m.res === x ? 'on ' + (x === 'OK' ? 'ok' : 'mal') : ''}" onclick="recSet('dron.motores.${i}.res','${x}')">${x}</button>`).join('')}</div></div>`).join('') || '<p class="sutil">Elegí el modelo en el paso 1.</p>'}</div>
+        <div class="mt-res">${['OK', 'Ruido', 'Vibración', 'No gira'].map(x => `<button class="${m.res === x ? 'on ' + (x === 'OK' ? 'ok' : 'mal') : ''}" onclick="recMotorRes(${i},'${x}')">${x}</button>`).join('')}</div></div>`).join('') || '<p class="sutil">Elegí el modelo en el paso 1.</p>'}</div>
+        <div class="ayuda">Tocá cómo está cada motor (OK, Ruido…): con eso queda marcado como revisado.</div>
         <button class="link mt-todos" onclick="recMotoresOK()">${ico('check', 'chico')} Marcar todos revisados y OK</button></div>
       <div class="campo"><label>Fotos generales${reqFoto()}</label><div class="fotos">${vistas.map(([k, t]) => slotFoto('dron.fotos.' + k, r.dron.fotos[k], t, 'dron', true, { modelo:r.modelo })).join('')}</div></div>`;
   },
@@ -6725,6 +6729,8 @@ function recQRBateriaLeida(i, txt){
   avisar(conocida ? `QR leído: <b>${esc(b.serie)}</b> · esta batería ya vino antes` : `QR leído: N° de serie <b>${esc(b.serie)}</b>`, 'qr', { tilde:true });
 }
 function recMotor(i){ const m = REC().dron.motores[i]; m.rev = !m.rev; m.u = usuarioId(); recGuardar(); pintarRec(); }
+// Elegir cómo está el motor ya cuenta como revisado (antes había que tildar aparte y no se entendía)
+function recMotorRes(i, x){ const m = REC().dron.motores[i]; m.res = x; m.rev = true; m.u = usuarioId(); recGuardar(); pintarRec(); }
 function recMotoresOK(){ REC().dron.motores.forEach(m => { m.rev = true; m.res = m.res || 'OK'; m.u = usuarioId(); }); recGuardar(); pintarRec(); }
 function recFrase(f){ const r = REC(), i = r.frases.indexOf(f); if (i < 0) r.frases.push(f); else r.frases.splice(i, 1); recGuardar(); pintarRec(); }
 
@@ -6744,8 +6750,28 @@ function faltaEnPaso(r, p){
 }
 function recSiguiente(){
   const r = REC(), f = faltaEnPaso(r, r.paso);
-  if (f.length){ error('Falta ' + f.join(', ')); $('#rec-cuerpo').classList.remove('tiembla'); $('#rec-cuerpo').offsetHeight; $('#rec-cuerpo').classList.add('tiembla'); return; }
+  if (f.length){ error('Falta ' + f.join(', ')); marcarFaltante('#rec-cuerpo'); return; }
   recIr(r.paso + 1);
+}
+/* Lleva la pantalla hasta lo primero que falta y lo marca (sirve para la recepción del dron y para los ingresos sueltos).
+   Falta: un campo obligatorio (*) sin elegir o vacío, una foto obligatoria sin sacar o un motor sin revisar. */
+function marcarFaltante(sel){
+  const cuerpo = $(sel); if (!cuerpo) return;
+  const vacioCampo = c => {
+    if (!c.querySelector(':scope > label .req')) return false;
+    if (c.querySelector('.elegido')) return false;
+    const op = c.querySelector('.opciones'); if (op) return !op.querySelector('.on');
+    if (c.querySelector('.motores')) return !!c.querySelector('.motor:not(.rev)');
+    const fb = c.querySelector('.foto-btn.falta'); if (fb) return true;
+    const ins = [...c.querySelectorAll('input:not([type=checkbox]),textarea')]; return ins.length > 0 && ins.every(x => !x.value.trim());
+  };
+  const el = [...cuerpo.querySelectorAll('.campo, .fotos, .rec-bat')].find(c => c.matches('.campo') ? vacioCampo(c) : !!c.querySelector(':scope > .foto-btn.falta, .fotos > .foto-btn.falta, .fila-in input.num:placeholder-shown'))
+    || cuerpo.querySelector('.foto-btn.falta');
+  cuerpo.classList.remove('tiembla'); cuerpo.offsetHeight; cuerpo.classList.add('tiembla');
+  if (!el) return;
+  el.scrollIntoView({ behavior:'smooth', block:'center' });
+  el.classList.remove('falta-aca'); el.offsetHeight; el.classList.add('falta-aca');
+  setTimeout(() => el.classList.remove('falta-aca'), 3400);
 }
 async function recEmpezarDeNuevo(){
   if (!await confirmar('¿Empezar de nuevo?', 'Se borra lo cargado en esta recepción.', 'Empezar de nuevo', true)) return;
@@ -6776,7 +6802,7 @@ function recEjemplo(){
 /* ---------- Confirmar: se crea la orden a nombre del técnico que recibió ---------- */
 async function recConfirmar(){
   const r = REC(); const faltan = PASOS_REC.map((_, i) => faltaEnPaso(r, i)).map((f, i) => f.length ? i : -1).filter(i => i >= 0);
-  if (faltan.length){ error('Falta completar: ' + faltan.map(i => PASOS_REC[i]).join(', ')); recIr(faltan[0]); return; }
+  if (faltan.length){ error('Falta completar: ' + faltan.map(i => PASOS_REC[i]).join(', ')); recIr(faltan[0]); setTimeout(() => marcarFaltante('#rec-cuerpo'), 350); return; }
   const ab = ordenAbiertaDron(r.chasis);
   if (ab && !await confirmar('Este dron ya está en el taller', `Tiene abierta la <b>${ab.num}</b> (${esc(ESTADOS_ORDEN[ab.estado].t)}, a cargo de ${esc(nomUsuario(ab.tec))}). ¿Crear otra orden igual?`, 'Crear otra orden', true)) return;
   let dr = D().drones.find(x => x.chasis === r.chasis.trim());
