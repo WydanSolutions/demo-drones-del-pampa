@@ -776,6 +776,9 @@ html[data-tema="oscuro"] .tope-logo .dp-drones,html[data-tema="oscuro"] .tope-lo
    para leer al sol, menú abajo y el botón Escanear fijo en el centro.
    ===================================================================== */
 body.cel{font-size:16px}
+/* Cuando la página baja sola hasta un campo (al tocarlo, al escribir, al marcar lo que falta), que no lo deje
+   debajo de la barra de arriba ni de la de abajo (Inicio · Escanear · Recibir). Pasaba en iPhone. */
+html:has(> body.cel){scroll-padding:84px 0 calc(112px + env(safe-area-inset-bottom))}
 body.cel .solo-cel{display:inline-flex!important}
 body.cel .solo-pc{display:none!important}
 /* El menú lateral pasa a ser un cajón que se abre desde «Más» */
@@ -849,6 +852,9 @@ body.cel .barra-cel{position:fixed;left:0;right:0;bottom:0;z-index:70;display:fl
 .bc-scan{flex:0 0 76px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11.5px;font-weight:700;color:var(--azul);margin-top:-22px}
 .bc-scan .ico{width:62px;height:62px;padding:16px;border-radius:50%;color:#fff;background:linear-gradient(160deg,#1A57C8,var(--azul));box-shadow:0 10px 22px -6px rgba(11,61,158,.65), 0 0 0 5px var(--carta);transition:transform .12s}
 .bc-scan:active .ico{transform:scale(.93)}
+/* Celulares angostos (320–350 px, Android chicos y iPhone SE): los nombres de abajo en un solo renglón */
+.bc-it span,.bc-scan span{white-space:nowrap}
+@media (max-width:350px){ .bc-it{font-size:10.5px;min-width:0} .bc-scan{flex-basis:68px} }
 
 /* En la compu, con «Vista celular», la página se muestra con el ancho de un celular */
 body.cel-forzada{background:radial-gradient(1000px 600px at 50% 0,#E3EAF5,#D5DEEB)}
