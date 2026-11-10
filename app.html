@@ -1997,6 +1997,18 @@ body.cel .sp-bot .btn{flex-basis:100%}
 .modal-cuerpo > .sig-paso:first-child{margin-top:0}
 /* Celulares angostos (≤ 360 px): solo se lee el nombre del paso en el que está; los otros quedan como números */
 @media (max-width:360px){ .pasos-ord span:not(.on) b{visibility:hidden} .pasos-ord span.on b{white-space:nowrap} .pasos-ord span:first-child.on b{text-align:left} }
+/* Inicio del técnico: «Esperando respuesta del cliente» */
+.espera-cli{border:1.5px solid var(--ambar);margin-bottom:16px}
+.ec-lista{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.ec-fila{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px;border-radius:var(--r);background:var(--ambar-f)}
+.ec-txt{flex:1 1 220px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;min-width:0}
+.ec-txt span{font-size:13.5px;color:var(--texto-2)}
+.ec-bot{display:flex;gap:8px;flex-wrap:wrap}
+body.cel .ec-bot{flex-basis:100%}
+body.cel .ec-bot .btn-verde{flex:1 1 100%}
+body.cel .ec-bot .btn-linea{flex:1 1 100%}
+/* Ventana del PDF: «Listo · volver» siempre a mano */
+body.cel .modal-pie .doc-listo{flex-basis:100%;order:9}
 
 </style>
 </head>
@@ -6070,6 +6082,7 @@ function panelTecnico(v){
     <div class="enc tec"><div><div class="enc-pre">${fLarga(hoy())}</div><h1>${saludoHora()}, ${esc(u.nombre)}</h1>
       <p class="enc-sub">Tenés <b>${mios.length} equipo${mios.length === 1 ? '' : 's'} a tu cargo</b>${hsHoy ? ` · llevás ${horas(hsHoy)} hoy` : ''}</p></div></div>
     ${ot ? `<button class="aviso-linea verde-l" onclick="ORD_TAB='horas';abrirOrden('${ot.id}')">${ico('reloj')}<span><b>El reloj está corriendo en la ${ot.num}</b> · desde las ${t.h}</span>${ico('der', 'chico')}</button>` : ''}
+    ${esperaCliente(mios)}
     <div class="gran-grid">
       ${verRec ? B('recepcion', 'Recibir', "ir('recepcion')", 'prim') : ''}${verRep ? B('llave', 'Mis equipos', "ir('reparaciones')") : ''}${B('escanear', 'Escanear', 'abrirEscaner()', 'verde')}
       ${verRep ? B('caja', 'Pedir repuesto', "elegirOrdenPara('pedir')") + B('volver', 'Devolver repuesto', "elegirOrdenPara('devolver')") + B('reloj', 'Cargar horas', "elegirOrdenPara('horas')") : ''}${puedeVer('ventas') ? B('carrito', 'Vender', "ir('ventas')") : ''}${B('aprobar', 'Mis pedidos', "document.getElementById('mis-pedidos').scrollIntoView({behavior:'smooth'})")}
@@ -6507,15 +6520,18 @@ function docListo(doc, nombre, o){
   if (_docUrl) URL.revokeObjectURL(_docUrl);
   _docUrl = URL.createObjectURL(doc.output('blob'));
   registrar('Generó el PDF «' + nombre + '»', o.ref || '', o.sec || ''); guardar();
-  // WhatsApp solo si el cliente tiene un teléfono cargado; si no, no se ofrece (ni se dice «tocá WhatsApp»)
+  // WhatsApp siempre que haya un mensaje para el cliente: si no tiene teléfono cargado, se le pide al tocar (y queda en su ficha)
   const tel = String(o.tel || '').replace(/\D/g, '').length >= 8 ? o.tel : '';
-  abrirModal({ titulo:esc(nombre.replace(/\.pdf$/, '')), sub:tel ? 'Listo para imprimir, descargar o mandar por WhatsApp' : 'Listo para imprimir o descargar' + (o.texto ? ' · para mandarlo por WhatsApp, cargale un teléfono al cliente' : ''), ancho:'ancho modal-doc',
+  _docWa = { tel, texto:o.texto || '', nombre, cli:o.cli || '' };
+  // «Listo»: siempre hay una salida clara (antes, en el celular, la cruz quedaba tapada y el técnico no sabía cómo volver)
+  const listo = `<button class="btn btn-linea doc-listo" onclick="cerrarModal()">${ico(o.alCerrar ? 'izq' : 'x')} ${esc(o.volverTxt || (o.alCerrar ? 'Listo · volver' : 'Cerrar'))}</button>`;
+  abrirModal({ titulo:esc(nombre.replace(/\.pdf$/, '')), sub:o.texto ? 'Listo para mandar por WhatsApp, imprimir o descargar' : 'Listo para imprimir o descargar', ancho:'ancho modal-doc', alCerrar:o.alCerrar || null,
     // En el celular (Android y iPhone) el navegador no muestra un PDF adentro de la página: se dibujan las hojas con pdf.js
     cuerpo:pdfEnPagina() ? `<iframe class="doc-visor" src="${_docUrl}#toolbar=0&view=FitH" title="Vista previa"></iframe>` : `<div class="doc-visor doc-hojas" id="doc-hojas"><p>${ico('reloj', 'chico')} Preparando la vista previa…</p></div>`,
     alAbrir:() => { if (!pdfEnPagina()) hojasPDF(doc); },
-    pie:`${tel ? `<button class="btn btn-verde doc-wa" onclick="docWhats('${esc(tel)}', ${JSON.stringify(o.texto || '').replace(/"/g, '&quot;')}, '${esc(nombre)}')">${ico('whatsapp')} WhatsApp</button>` : ''}
+    pie:`${o.texto ? `<button class="btn btn-verde doc-wa" onclick="docWhats()">${ico('whatsapp')} ${tel ? 'Mandar por WhatsApp' : 'WhatsApp'}</button>` : ''}
       <button class="btn btn-linea" onclick="docImprimir()">${ico('imprimir')} Imprimir</button>
-      <button class="btn btn-prim" onclick="docDescargar('${esc(nombre)}')">${ico('descargar')} Descargar</button>` });
+      <button class="btn btn-prim" onclick="docDescargar('${esc(nombre)}')">${ico('descargar')} Descargar</button>${listo}` });
   _docActual = doc;
 }
 let _docActual = null;
@@ -6537,10 +6553,19 @@ async function hojasPDF(doc){
 }
 function docDescargar(nombre){ _docActual.save(nombre); avisar('Se descargó «' + esc(nombre) + '»', 'descargar'); }
 function docImprimir(){ const f = $('.doc-visor'); try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e){ window.open(_docUrl, '_blank'); } }
-function docWhats(tel, texto, nombre){
-  docDescargar(nombre);
-  abrirWhatsApp(tel, texto + '\n\n(Te adjuntamos el PDF: ' + nombre + ')');
-  registrar('Mandó por WhatsApp «' + nombre + '»', '', ''); guardar();
+let _docWa = null;
+async function docWhats(){
+  const w = _docWa; if (!w) return;
+  if (!w.tel){
+    const c = cliente(w.cli), t = await pedirTexto('¿A qué número lo mandamos?', '', 'Teléfono del cliente', c ? 'Queda guardado en la ficha de ' + esc(c.nombre) + '.' : '');
+    if (!t) return;
+    if (String(t).replace(/\D/g, '').length < 8){ error('Ese teléfono no parece completo'); return; }
+    w.tel = t; if (c){ c.tel = t; registrar('Cargó el teléfono del cliente', c.nombre, 'clientes'); guardar(); }
+    const b = $('.doc-wa'); if (b) b.innerHTML = `${ico('whatsapp')} Mandar por WhatsApp`;
+  }
+  docDescargar(w.nombre);
+  abrirWhatsApp(w.tel, w.texto + '\n\n(Te adjuntamos el PDF: ' + w.nombre + ')');
+  registrar('Mandó por WhatsApp «' + w.nombre + '»', '', ''); guardar();
 }
 
 /* ---------- Excel sin imágenes, prolijo y listo para imprimir en una hoja ----------
@@ -6988,9 +7013,9 @@ async function comprobanteRecepcion(id, porWhats){
     pdfFirmas(doc, 'Entrega: ' + (o.entrega || c.contacto || ''), 'Recibe: ' + nomUsuario(o.recibio));
   }
   pdfPie(doc, o.num);
-  docListo(doc, `Recepcion ${o.num} - ${c.nombre}.pdf`, { tel:c.tel, ref:o.num, sec:'recepcion',
+  docListo(doc, `Recepcion ${o.num} - ${c.nombre}.pdf`, { tel:c.tel, cli:o.cli, ref:o.num, sec:'recepcion',
     texto:`${hola(c)}, te escribimos de Drones del Pampa. Recibimos tu ${modeloTxt(o.modelo)} (chasis ${o.chasis}) con la orden ${o.num}. Te mandamos el comprobante de recepción con el checklist y las fotos. Cualquier novedad te avisamos.` });
-  if (porWhats) setTimeout(() => avisar('Tocá «WhatsApp» para mandarlo', 'whatsapp'), 400);
+
 }
 // Segunda copia: misma cabecera en la página nueva
 async function nuevoPDFEn(doc, o){ cabeceraPDF(doc, 'Comprobante de recepción', o.num); }
@@ -7268,9 +7293,9 @@ async function comprobanteIngreso(id, porWhats){
     pdfFirmas(doc, 'Entrega: ' + (o.entrega || c.contacto || ''), 'Recibe: ' + nomUsuario(o.recibio));
   }
   pdfPie(doc, o.num);
-  docListo(doc, `Recepcion ${o.num} - ${c.nombre}.pdf`, { tel:c.tel, ref:o.num, sec:'recepcion',
+  docListo(doc, `Recepcion ${o.num} - ${c.nombre}.pdf`, { tel:c.tel, cli:o.cli, ref:o.num, sec:'recepcion',
     texto:`${hola(c)}, te escribimos de Drones del Pampa. Recibimos tu ${modeloTxt(o.modelo)} (N° de serie ${o.chasis}) con la orden ${o.num}. Te mandamos el comprobante de recepción con el checklist y las fotos. Cualquier novedad te avisamos.` });
-  if (porWhats) setTimeout(() => avisar('Tocá «WhatsApp» para mandarlo', 'whatsapp'), 400);
+
 }
 
 /* ---------- Datos de ejemplo: algunos generadores y controles en el taller (lo llama 05-ejemplo.js) ---------- */
@@ -8014,7 +8039,7 @@ function siguientePaso(o, compacto){
     else { txt = `<b>El cliente no aprobó</b> el presupuesto ${p.num}.`; bot = B('btn-prim', 'presupuesto', 'Hacer otro presupuesto', `pasoOtroPresu('${p.id}')`) + B('btn-linea', 'volver', 'Devolver sin reparar', `devolverSinReparar('${id}')`); }
   } else if (k === 2){
     txt = p ? `Mandaste el presupuesto <b>${p.num}</b> (${usd(totalPresu(p))})${p.fEnvio ? ' el ' + fCorta(p.fEnvio) : ''}. ¿Qué respondió el cliente?` : 'El presupuesto está enviado. ¿Qué respondió el cliente?';
-    bot = B('btn-verde', 'check', 'El cliente aprobó', `pasoAprobo('${id}')`) + B('btn-linea', 'x', 'No aprobó', `pasoNoAprobo('${id}')`);
+    bot = B('btn-verde', 'check', 'El cliente aprobó · empezar a reparar', `pasoAprobo('${id}')`) + B('btn-linea', 'x', 'No aprobó', `pasoNoAprobo('${id}')`);
     if (p) extra = L(`${ico('whatsapp', 'chico')} Volver a mandarlo por WhatsApp`, `presuPDF('${p.id}', true)`);
   } else if (k === 3){
     const pend = D().aprobaciones.filter(a => a.est === 'pendiente' && a.orden === id && a.tipo === 'retiro').reduce((s, a) => s + (a.items || []).length, 0);
@@ -8031,9 +8056,20 @@ function siguientePaso(o, compacto){
     <div class="sp-cuerpo"><small class="sp-t">${k === 4 ? 'Estado' : 'Lo que sigue'}</small><p>${txt}</p>${bot ? `<div class="sp-bot">${bot}</div>` : ''}${extra ? `<div class="sp-extra">${extra}</div>` : ''}</div></div>`;
 }
 
+/* Inicio del técnico: lo que espera respuesta del cliente, con el botón a mano (10/11/2026: «sigue sin quedar claro
+   dónde poner para iniciar a reparar») */
+function esperaCliente(mios){
+  const l = mios.filter(o => etapaOrden(o) === 2 && puedeTrabajar(o)); if (!l.length) return '';
+  return `<section class="tarjeta espera-cli"><div class="tarjeta-cab"><span class="tarjeta-ico ambar">${ico('whatsapp')}</span><div><h3>Esperando respuesta del cliente</h3><div class="sub">Cuando el cliente conteste, marcalo acá</div></div></div>
+    <div class="ec-lista">${l.map(o => { const p = presuDeOrden(o); return `<div class="ec-fila">
+      <button class="ec-txt" onclick="fichaOrden('${o.id}')"><b>${esc(modeloTxt(o.modelo))}</b><span>${esc(nomCli(o.cli))}${p ? ` · ${p.num} · ${usd(totalPresu(p))}` : ''}</span></button>
+      <div class="ec-bot"><button class="btn btn-verde" onclick="pasoAprobo('${o.id}')">${ico('check')} Aprobó · empezar a reparar</button><button class="btn btn-linea" onclick="pasoNoAprobo('${o.id}')">No aprobó</button></div></div>`; }).join('')}</div></section>`;
+}
+
 /* ---------- Acciones ---------- */
 // Después de cada paso: se redibuja lo de atrás y, si la ventanita del equipo estaba abierta, se vuelve a mostrar con el paso nuevo
-function trasPaso(id, ventana){ refrescar(); if (ventana) fichaOrden(id); }
+// Desde el presupuesto se va a la orden; desde el inicio se abre la ventanita del equipo con el paso nuevo (pedir repuestos, terminar)
+function trasPaso(id, ventana){ if (SECCION === 'presupuestos'){ abrirOrden(id); return; } refrescar(); if (ventana || SECCION === 'panel') fichaOrden(id); }
 const ventanaAbierta = () => !!$('#modal:not(.hidden) .sig-paso');
 function pasoPresu(id){ cerrarModal(); nuevoPresupuesto({ orden:id }); }
 function pasoEnviar(pid){ cerrarModal(); presuEnviar(pid, true); }
@@ -8796,7 +8832,7 @@ async function comprobanteVenta(id){
   pdfTotales(doc, filasTotalVenta(brutoVenta(x), x.desc || 0));
   pdfTexto(doc, 'Este comprobante no es la factura. La factura se emite por separado.', { tam:8.5, color:PDF_GRIS });
   pdfPie(doc, x.num);
-  docListo(doc, `Venta ${x.num}${c ? ' - ' + c.nombre : ''}.pdf`, { tel:c ? c.tel : '', ref:x.num, sec:'ventas', texto:`${hola(c)}, te escribimos de ${datosTaller().nombre}. Te mandamos el comprobante de tu compra ${x.num} por ${usd(tot)}. ¡Gracias!` });
+  docListo(doc, `Venta ${x.num}${c ? ' - ' + c.nombre : ''}.pdf`, { tel:c ? c.tel : '', cli:c ? c.id : '', ref:x.num, sec:'ventas', texto:`${hola(c)}, te escribimos de ${datosTaller().nombre}. Te mandamos el comprobante de tu compra ${x.num} por ${usd(tot)}. ¡Gracias!` });
 }
 
 
@@ -8926,6 +8962,8 @@ function accionesPresu(p, reglaOn){
     return `<p class="ayuda-sec">${ico('reloj', 'chico')} Esperando la aprobación de ${esc(quienFalta(a))}.</p>` + pdf('Ver PDF') + anular;
   }
   if (p.est === 'aprobado') return b('btn-prim', 'whatsapp', 'Enviar al cliente', `presuEnviar('${id}')`) + pdf('Ver PDF') + anular;
+  // De una orden: los mismos pasos que en «Mis equipos» (aprobó → a reparación; no aprobó → otro presupuesto o devolver)
+  if (p.est === 'enviado' && p.orden && orden(p.orden)) return b('btn-verde', 'check', 'El cliente aprobó · empezar a reparar', `pasoAprobo('${p.orden}')`) + b('btn-linea', 'x', 'No aprobó', `pasoNoAprobo('${p.orden}')`) + pdf() + anular;
   if (p.est === 'enviado') return b('btn-verde', 'check', 'El cliente aceptó', `presuRespuesta('${id}','aceptado')`) + b('btn-linea', 'x', 'Lo rechazó', `presuRespuesta('${id}','rechazado')`) + b('btn-fantasma', 'presupuesto', 'Hacer versión ' + (p.version + 1), `presuVersion('${id}')`) + pdf() + anular;
   if (p.est === 'aceptado') return pdf() + (p.orden && orden(p.orden) && enTaller(orden(p.orden)) ? b('btn-fantasma', 'presupuesto', 'Hacer versión ' + (p.version + 1), `presuVersion('${id}')`) : '');
   return pdf() + anular;
@@ -9010,9 +9048,12 @@ async function presuPDF(id, enviar){
   doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...PDF_HOJA); pdfEspacio(doc, 10); doc.text(p.anulado ? 'ANULADO' : 'SUJETO A CAMBIOS', 14, doc.y); doc.y += 6;
   pdfTexto(doc, `Precios en dólares, IVA incluido. Validez: ${p.validez} días. Si durante la reparación aparece algo nuevo, se informa con una nueva versión del presupuesto.`, { tam:8.5, color:PDF_GRIS });
   pdfPie(doc, p.num);
-  docListo(doc, `Presupuesto ${p.num}${p.version > 1 ? ' v' + p.version : ''} - ${c.nombre}.pdf`, { tel:c.tel, ref:p.num, sec:'presupuestos',
+  // Al mandarlo, «Listo» lleva al técnico al inicio (Mis equipos, donde después marca «El cliente aprobó») y a Claudio o Florencia, a la orden
+  const volver = enviar ? (esTecnico() ? () => { SUB = {}; ir('panel'); } : ord ? () => abrirOrden(ord.id) : null) : null;
+  docListo(doc, `Presupuesto ${p.num}${p.version > 1 ? ' v' + p.version : ''} - ${c.nombre}.pdf`, { tel:c.tel, cli:p.cli, ref:p.num, sec:'presupuestos', alCerrar:volver,
+    volverTxt:enviar ? (esTecnico() ? 'Listo · volver al inicio' : ord ? 'Listo · volver a la orden' : '') : '',
     texto:`${hola(cliente(p.cli))}, te escribimos de Drones del Pampa. Te mandamos el presupuesto ${p.num}${ord ? ' para tu ' + modeloTxt(ord.modelo) : ''} por ${usd(tot)} (IVA incluido, sujeto a cambios). Quedamos atentos a tu respuesta.` });
-  if (enviar) setTimeout(() => avisar('Tocá «WhatsApp» para mandárselo al cliente', 'whatsapp'), 400);
+
 }
 
 
@@ -9331,7 +9372,7 @@ async function comprobanteBateria(id){
   if (b.diag.length) pdfDatos(doc, [['Diagnóstico', b.diag.join(', ')]].concat(tienePrecioBat(b) || b.total ? [['Total con IVA', usd(totalBateria(b))]] : []), 'Diagnóstico');
   pdfTexto(doc, 'El diagnóstico lo hace nuestro técnico de baterías. Si hace falta una reparación, te mandamos el presupuesto antes de hacerla.', { tam:9 });
   pdfFirmas(doc, 'Entrega: ' + (c.contacto || c.nombre), 'Recibe: ' + nomUsuario(b.recibio)); pdfPie(doc, b.num);
-  docListo(doc, `Recepcion bateria ${b.num} - ${c.nombre}.pdf`, { tel:c.tel, ref:b.num, sec:'baterias', texto:`${hola(c)}, recibimos tu ${b.disp} (N° de serie ${b.serie}) con el número ${b.num}. Te avisamos con el diagnóstico.` });
+  docListo(doc, `Recepcion bateria ${b.num} - ${c.nombre}.pdf`, { tel:c.tel, cli:b.cli, ref:b.num, sec:'baterias', texto:`${hola(c)}, recibimos tu ${b.disp} (N° de serie ${b.serie}) con el número ${b.num}. Te avisamos con el diagnóstico.` });
 }
 
 /* ---------- Síntomas rápidos, dispositivos y tabla de precios por diagnóstico (Claudio y Florencia) ---------- */
@@ -10041,7 +10082,7 @@ async function pdfEstadoCuenta(cid){
   pdfTabla(doc, ['Fecha', 'Concepto', 'Vence', 'Debe', 'Haber', 'Saldo'], mv.map(m => [fCorta(m.f), m.t, m.venc ? fCorta(m.venc) : '', m.debe ? usd(m.debe) : '', m.haber ? usd(m.haber) : '', usd(m.saldo)]), { columnStyles:{ 3:{ halign:'right' }, 4:{ halign:'right' }, 5:{ halign:'right' } } });
   pdfTotales(doc, [[saldo < -.01 ? 'A favor del cliente' : 'Saldo a la fecha', usd(Math.abs(saldo)), true]]);
   if (rc.on) pdfTexto(doc, `Las facturas vencidas generan un recargo del ${rc.pct} % cada ${rc.cadaDias} días, desde los ${rc.desdeDias} días de vencidas.`, { tam:8.5, color:PDF_GRIS });
-  pdfPie(doc); docListo(doc, `Estado de cuenta - ${c.nombre} - ${fArchivo(hoy())}.pdf`, { tel:c.tel, ref:c.nombre, sec:'facturacion', texto:`${hola(c)}, te mandamos el estado de cuenta de ${cfgGet('taller.nombre') || NEGOCIO.nombre} al ${fCorta(hoy())}. Saldo: ${usd(saldo)}.` });
+  pdfPie(doc); docListo(doc, `Estado de cuenta - ${c.nombre} - ${fArchivo(hoy())}.pdf`, { tel:c.tel, cli:c.id, ref:c.nombre, sec:'facturacion', texto:`${hola(c)}, te mandamos el estado de cuenta de ${cfgGet('taller.nombre') || NEGOCIO.nombre} al ${fCorta(hoy())}. Saldo: ${usd(saldo)}.` });
 }
 
 /* ---------- Entregas: cuando el cliente retira (la pestaña cuenta lo mismo que lista) ---------- */
