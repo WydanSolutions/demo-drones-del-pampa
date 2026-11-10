@@ -832,6 +832,17 @@ body.cel .modal-cab{padding:18px 18px 8px}
 body.cel .modal-cuerpo{padding:6px 18px 18px}
 body.cel .modal-pie{padding:12px 18px calc(16px + env(safe-area-inset-bottom))}
 body.cel .modal-pie .btn{flex:1}
+/* Si los botones no entran en un renglón, bajan al siguiente (antes se salían por la izquierda y «WhatsApp» quedaba cortado) */
+body.cel .modal-pie{flex-wrap:wrap}
+body.cel .modal-pie .btn{flex:1 1 auto;min-width:0}
+body.cel .modal-pie .doc-wa{flex-basis:100%;order:-1}
+/* Vista previa del PDF en el celular: las hojas dibujadas una debajo de otra */
+.doc-hojas{overflow:auto;display:flex;flex-direction:column;gap:10px;padding:8px;align-items:stretch}
+.doc-hojas canvas{display:block;background:#fff;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.doc-hojas p{margin:auto;color:#fff;display:flex;gap:8px;align-items:center;padding:20px;text-align:center}
+body.cel .doc-hojas{min-height:52vh;max-height:58vh}
+/* Con una ventana abierta, los avisos van arriba: abajo tapaban los botones de la ventana (ej.: «WhatsApp») */
+body.cel:has(#modal:not(.hidden)) .avisos{bottom:auto;top:calc(10px + env(safe-area-inset-top))}
 body.cel .fo-grid{grid-template-columns:1fr}
 body.cel .fo-foto{min-height:170px}
 body.cel .bus-fondo{padding:0}
@@ -2170,7 +2181,7 @@ const BV_FRASE  = 'Así puede quedar el taller: cada dron que entra con su check
 
 // Dónde se guardan los datos de ejemplo en el navegador de quien abre la demo.
 const CLAVE_GUARDADO = 'dronesdelpampa_demo_v1';
-const VERSION_DATOS = 7;
+const VERSION_DATOS = 8;
 
 // Contraseña de la DEMOSTRACIÓN (igual para todos).
 // ⚠ En la versión real cada usuario entra con su correo y su contraseña (Firebase Authentication)
@@ -2264,7 +2275,7 @@ const CONFIG_INICIAL = {
   aprobaciones: {
     retiro:      { on:true, quien:'cualquiera' },   // cualquiera = Claudio o Florencia
     devolucion:  { on:true, quien:'cualquiera' },
-    presupuesto: { on:true, quien:'ambos' },        // ambos = Claudio y Florencia
+    presupuesto: { on:false, quien:'ambos' },       // sin aprobación: los técnicos lo mandan directo por WhatsApp (10/11/2026). Si se prende: ambos = Claudio y Florencia
     venta:       { on:true, quien:'cualquiera' },
     pase:        { on:true, quien:'claudio' },
     ajuste:      { on:true, quien:'claudio' }
@@ -3868,13 +3879,15 @@ function crearDatosEjemplo(h){
   const fe = (tipo, f, hr, u, extra) => Object.assign({ ej:tipo, n:entre(1, 998), f, h:hr, u }, extra || {});   // foto de ejemplo
   const conNum = (x, fn) => alFinal.push(() => fn(x.num));
 
-  /* ---- Usuarios (7 de 10) ---- */
+  /* ---- Usuarios (8 de 10) ---- */
   d.usuarios = [
     { id:'claudio',   nombre:'Claudio',             tipo:'dueno',    cargo:'Dueño',                                 activo:true, alta:'2026-01-05', verActividad:true },
     { id:'florencia', nombre:'Florencia',           tipo:'admin',    cargo:'Stock, facturación y cobros',           activo:true, alta:'2026-01-05', miEspacio:true },
     { id:'tec1',      nombre:'Técnico',             tipo:'tecnico',  cargo:'Técnico de taller',                     activo:true, alta:'2026-01-05' },
     { id:'tec2',      nombre:'Técnico 2',           tipo:'tecnico',  cargo:'Técnico de taller',                     activo:true, alta:'2026-01-05' },
     { id:'tec3',      nombre:'Técnico 3',           tipo:'tecnico',  cargo:'Técnico de taller',                     activo:true, alta:'2026-02-16' },
+    // Valentina (10/11/2026, pedido de la usuaria): la misma vista que los técnicos. El cargo se cambia en Configuración › Usuarios
+    { id:'valentina', nombre:'Valentina',           tipo:'tecnico',  cargo:'Taller',                                activo:true, alta:h },
     { id:'esteban',   nombre:'Esteban',             tipo:'externo',  cargo:'Reparación de baterías · externo',      activo:true, alta:'2026-01-05' },
     { id:'tablet',    nombre:'Consulta de precios', tipo:'consulta', cargo:'Tablet del mostrador',                  activo:true, alta:'2026-01-05' },
     { id:'wydan',     nombre:'Soporte Wydan',       tipo:'soporte',  cargo:'Soporte técnico · no ocupa lugar',      activo:true, alta:'2026-01-05', oculto:true }
@@ -5176,7 +5189,7 @@ const PRONTO = {
   equipo: ['Lo que trabajó cada uno por período', 'Horas, repuestos, presupuestos y ventas', 'Comparación entre técnicos', 'Exportación a Excel'],
   miespacio: ['Notas adhesivas con grupos', 'Calendario de día, semana y mes', 'Recordatorios', 'Lista de tareas'],
   actividad: ['Quién hizo qué y cuándo', 'Cómo estaba antes y cómo quedó', 'Filtros por usuario, fecha y sección', 'Nada se borra: se anula'],
-  config: ['Tarjetas por tema con interruptores', 'Usuarios y permisos (7 de 10)', 'Aprobaciones, precios y recargos', 'Volver a lo recomendado'],
+  config: ['Tarjetas por tema con interruptores', 'Usuarios y permisos (8 de 10)', 'Aprobaciones, precios y recargos', 'Volver a lo recomendado'],
   consulta: ['Escanear y ver el precio final', 'Disponible y versión usada', 'Pantalla completa para la tablet', 'Búsqueda por código o nombre']
 };
 function pronto(sec){
@@ -6448,13 +6461,31 @@ function docListo(doc, nombre, o){
   // WhatsApp solo si el cliente tiene un teléfono cargado; si no, no se ofrece (ni se dice «tocá WhatsApp»)
   const tel = String(o.tel || '').replace(/\D/g, '').length >= 8 ? o.tel : '';
   abrirModal({ titulo:esc(nombre.replace(/\.pdf$/, '')), sub:tel ? 'Listo para imprimir, descargar o mandar por WhatsApp' : 'Listo para imprimir o descargar' + (o.texto ? ' · para mandarlo por WhatsApp, cargale un teléfono al cliente' : ''), ancho:'ancho modal-doc',
-    cuerpo:`<iframe class="doc-visor" src="${_docUrl}#toolbar=0&view=FitH" title="Vista previa"></iframe>`,
-    pie:`${tel ? `<button class="btn btn-linea" onclick="docWhats('${esc(tel)}', ${JSON.stringify(o.texto || '').replace(/"/g, '&quot;')}, '${esc(nombre)}')">${ico('whatsapp')} WhatsApp</button>` : ''}
+    // En el celular (Android y iPhone) el navegador no muestra un PDF adentro de la página: se dibujan las hojas con pdf.js
+    cuerpo:pdfEnPagina() ? `<iframe class="doc-visor" src="${_docUrl}#toolbar=0&view=FitH" title="Vista previa"></iframe>` : `<div class="doc-visor doc-hojas" id="doc-hojas"><p>${ico('reloj', 'chico')} Preparando la vista previa…</p></div>`,
+    alAbrir:() => { if (!pdfEnPagina()) hojasPDF(doc); },
+    pie:`${tel ? `<button class="btn btn-verde doc-wa" onclick="docWhats('${esc(tel)}', ${JSON.stringify(o.texto || '').replace(/"/g, '&quot;')}, '${esc(nombre)}')">${ico('whatsapp')} WhatsApp</button>` : ''}
       <button class="btn btn-linea" onclick="docImprimir()">${ico('imprimir')} Imprimir</button>
       <button class="btn btn-prim" onclick="docDescargar('${esc(nombre)}')">${ico('descargar')} Descargar</button>` });
   _docActual = doc;
 }
 let _docActual = null;
+// ¿El navegador muestra PDF adentro de la página? En la compu sí; en el celular o la tablet, no.
+const pdfEnPagina = () => !esCel() && !matchMedia('(pointer:coarse)').matches;
+async function hojasPDF(doc){
+  const caja = $('#doc-hojas'); if (!caja) return;
+  try {
+    await cargarLib('pdfjs'); pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+    const pdf = await pdfjsLib.getDocument({ data:doc.output('arraybuffer') }).promise, ancho = Math.max(320, caja.clientWidth - 16), dpr = Math.min(2, devicePixelRatio || 1);
+    caja.innerHTML = '';
+    for (let i = 1; i <= pdf.numPages; i++){
+      const pg = await pdf.getPage(i), v0 = pg.getViewport({ scale:1 }), vp = pg.getViewport({ scale:ancho / v0.width * dpr });
+      const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height; c.style.width = '100%';
+      caja.appendChild(c); await pg.render({ canvasContext:c.getContext('2d'), viewport:vp }).promise;
+      if (!document.body.contains(caja)) return;
+    }
+  } catch (e){ caja.innerHTML = `<p>${ico('info', 'chico')} No se pudo mostrar la vista previa: tocá «Descargar» para verlo.</p>`; }
+}
 function docDescargar(nombre){ _docActual.save(nombre); avisar('Se descargó «' + esc(nombre) + '»', 'descargar'); }
 function docImprimir(){ const f = $('.doc-visor'); try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e){ window.open(_docUrl, '_blank'); } }
 function docWhats(tel, texto, nombre){
@@ -7847,7 +7878,7 @@ async function reporteFacturar(id){
   const o = orden(id), c = cliente(o.cli) || { nombre:nomCli(o.cli), doc:'', tel:'', localidad:'' }, tarifa = D().config.tarifaHora, iva = factorIva() - 1;
   const hs = (o.horas || []).filter(x => !x.anulado && x.h > 0);
   const doc = await nuevoPDF({ titulo:'Reporte para facturar', sub:o.num });
-  pdfDatos(doc, [['Cliente', c.nombre], ['RUT / CI', c.doc || '—'], ['Teléfono', c.tel || '—'], ['Localidad', c.localidad || '—'], ['Dron', modeloTxt(o.modelo)], ['Chasis', o.chasis], ['Ingreso', fCorta(o.f)], ['Terminado', fCorta(o.fTerm || hoy())]], 'Cliente y equipo');
+  pdfDatos(doc, [['Cliente', c.nombre], ['RUT / CI', c.doc || '—'], ['Teléfono', c.tel || '—'], ['Localidad', c.localidad || '—'], [o.tipo ? tipoOrdenTxt(o) : 'Dron', modeloTxt(o.modelo)], [o.tipo ? 'N° de serie' : 'Chasis', o.chasis], ['Ingreso', fCorta(o.f)], ['Terminado', fCorta(o.fTerm || hoy())]], 'Cliente y equipo');
   pdfTitulo(doc, 'Trabajos realizados');
   pdfTabla(doc, ['Fecha', 'Qué se hizo', 'Técnico', 'Horas'], hs.map(x => [fCorta(x.f), x.txt, nomUsuario(x.u), horas(x.h)]), { columnStyles:{ 3:{ halign:'right' } } });
   const rep = o.repuestos.filter(x => x.est === 'aprobado' && !repuestoDevuelto(x));
@@ -8749,7 +8780,12 @@ function presuPedirAprob(id){
 async function presuEnviar(id){
   const p = D().presupuestos.find(x => x.id === id); if (!p || p.anulado) return; if (!p.cli){ error('Elegí el cliente'); return; }
   if (!p.lineas.length){ error('Agregá al menos una línea'); return; }
-  p.est = 'enviado'; p.fEnvio = hoy(); registrar('Envió el presupuesto al cliente', p.num, 'presupuestos'); guardar(); ir('presupuestos', true, true);
+  // Sin aprobación (lo predeterminado desde el 10/11/2026): el técnico lo manda directo desde el borrador
+  const directo = p.est === 'borrador';
+  if (p.orden){ const o = orden(p.orden); if (o){
+    if (directo && enTaller(o) && !['garantia', 'presupuesto'].includes(o.estado)){ const antes = o.estado; o.estado = 'presupuesto'; registrar(`Cambió el estado de la ${o.num}`, o.num, 'reparaciones', { estado:ESTADOS_ORDEN[antes].t }, { estado:ESTADOS_ORDEN.presupuesto.t }); }
+    o.hist.push({ f:hoy(), h:hora(), u:USUARIO, a:`${directo ? 'Armó el presupuesto ' + p.num + ' y lo mandó' : 'Mandó el presupuesto ' + p.num} al cliente (${usd(totalPresu(p))})` }); } }
+  p.est = 'enviado'; p.fEnvio = hoy(); registrar(directo ? 'Envió el presupuesto al cliente (sin aprobación)' : 'Envió el presupuesto al cliente', p.num, 'presupuestos'); guardar(); _cache = {}; armarNav(); ir('presupuestos', true, true);
   presuPDF(id, true);
 }
 function presuRespuesta(id, r){
@@ -8792,7 +8828,7 @@ async function presuAnular(id){
 async function presuPDF(id, enviar){
   const p = D().presupuestos.find(x => x.id === id), c = cliente(p.cli) || { nombre:'—', doc:'—', tel:'', contacto:'' }, ord = p.orden && orden(p.orden), tot = totalPresu(p), iva = factorIva() - 1;
   const doc = await nuevoPDF({ titulo:'Presupuesto', sub:p.num + (p.version > 1 ? ' · versión ' + p.version : '') });
-  pdfDatos(doc, [['Cliente', c.nombre], ['RUT / CI', c.doc || '—'], ['Fecha', fCorta(p.fEnvio || p.f)], ['Válido hasta', fCorta(vencePresu(p))]].concat(ord ? [['Equipo', modeloTxt(ord.modelo)], ['Orden', ord.num + ' · chasis ' + ord.chasis]] : []), 'Datos');
+  pdfDatos(doc, [['Cliente', c.nombre], ['RUT / CI', c.doc || '—'], ['Fecha', fCorta(p.fEnvio || p.f)], ['Válido hasta', fCorta(vencePresu(p))]].concat(ord ? [['Equipo', modeloTxt(ord.modelo)], ['Orden', ord.num], [ord.tipo ? 'N° de serie' : 'Chasis', ord.chasis || '—']] : []), 'Datos');
   pdfTabla(doc, ['Concepto', 'Cant.', 'Precio', 'Importe'], p.lineas.map(l => [(l.cod ? l.cod + ' · ' : '') + l.txt, String(l.cant), usd(l.precio), usd(l.precio * l.cant)]), { columnStyles:{ 1:{ halign:'center' }, 2:{ halign:'right' }, 3:{ halign:'right' } } });
   pdfTotales(doc, [['Subtotal', usd(tot / (1 + iva))], ['IVA ' + D().config.iva + ' %', usd(tot - tot / (1 + iva))], ['Total USD', usd(tot), true]]);
   doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...PDF_HOJA); pdfEspacio(doc, 10); doc.text(p.anulado ? 'ANULADO' : 'SUJETO A CAMBIOS', 14, doc.y); doc.y += 6;
