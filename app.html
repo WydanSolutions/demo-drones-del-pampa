@@ -1916,6 +1916,30 @@ body.cel .cfg-logo-img{width:100%;height:90px}
 body.cel .me-gr .btn{flex:1}
 @media (hover:none){ .ni-acc{opacity:.8} }
 
+
+/* ===== css/12d-ingresos.css ===== */
+/* =====================================================================
+   RECIBIR: dron completo · solo generador · solo control remoto (13b-ingresos.js)
+   ===================================================================== */
+.rec-tipos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 18px;max-width:720px}
+.rec-tipos button{display:flex;align-items:center;justify-content:center;gap:10px;min-height:58px;padding:10px 14px;border-radius:var(--r-l);border:1.5px solid var(--borde);background:var(--carta);
+  font-size:15px;font-weight:600;color:var(--texto-2);box-shadow:var(--s1);transition:border-color .15s,background .15s,color .15s}
+.rec-tipos button .ico{width:24px;height:24px;flex:none}
+.rec-tipos button.on{border-color:var(--azul);background:var(--tinte);color:var(--azul);box-shadow:0 0 0 3px var(--tinte)}
+.rec-tipos button:active{transform:scale(.98)}
+/* En el celular: tres botones de igual tamaño, el ícono arriba y el texto abajo */
+body.cel .rec-tipos{gap:8px;margin-bottom:14px}
+body.cel .rec-tipos button{flex-direction:column;gap:5px;min-height:76px;padding:10px 6px;font-size:13px;line-height:1.2;text-align:center}
+body.cel .rec-tipos button .ico{width:26px;height:26px}
+
+/* «Agregar error» / «Agregar» al final de los botones rápidos */
+.frases .frase-mas{min-height:42px;padding:0 14px;border-radius:999px;border:1.5px dashed var(--azul);background:none;color:var(--azul);font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.frases .frase-mas:active{background:var(--tinte)}
+
+/* Fotos del ingreso: una grilla de cuatro */
+.ing-fotos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 18px}
+body.cel .ing-fotos{grid-template-columns:1fr}
+
 </style>
 </head>
 <body>
@@ -2146,7 +2170,7 @@ const BV_FRASE  = 'Así puede quedar el taller: cada dron que entra con su check
 
 // Dónde se guardan los datos de ejemplo en el navegador de quien abre la demo.
 const CLAVE_GUARDADO = 'dronesdelpampa_demo_v1';
-const VERSION_DATOS = 6;
+const VERSION_DATOS = 7;
 
 // Contraseña de la DEMOSTRACIÓN (igual para todos).
 // ⚠ En la versión real cada usuario entra con su correo y su contraseña (Firebase Authentication)
@@ -4374,6 +4398,8 @@ function crearDatosEjemplo(h){
 
   // Fechas de los clientes y los drones coherentes con lo que pasó
   ords.forEach(o => { const dr = DR(o.dron); if (dr.activacion > o.f) dr.activacion = sumarDias(o.f, -entre(20, 200)); const c = d.clientes.find(x => x.id === o.cli); if (c.alta > o.f) c.alta = o.f; });
+  // Generadores y controles remotos recibidos solos (13b-ingresos.js)
+  sembrarIngresosEj(d, ords, { elegir, entre, hh, fe, duenos, h });
   // Orden cronológico (lo más nuevo primero)
   const desc = (a, b) => (b.f + (b.h || '')).localeCompare(a.f + (a.h || ''));
   ords.forEach(o => o.hist.sort((a, b) => (a.f + a.h).localeCompare(b.f + b.h)));
@@ -4846,7 +4872,7 @@ function armarNav(){
   $('#lat-wydan').src = LOGO_WYDAN_ICONO;
   // Botones rápidos
   const rap = [];
-  if (puedeVer('recepcion')) rap.push(`<button class="btn btn-prim btn-sm" onclick="ir('recepcion')">${ico('dron')} Recibir dron</button>`);
+  if (puedeVer('recepcion')) rap.push(`<button class="btn btn-prim btn-sm" onclick="ir('recepcion')">${ico('recepcion')} Recibir</button>`);
   if (puedeVer('baterias') && tipo() !== 'externo') rap.push(`<button class="btn btn-linea btn-sm" onclick="ir('baterias');recibirBateria()">${ico('bateria')} Recibir batería</button>`);
   if (puedeVer('ventas')) rap.push(`<button class="btn btn-linea btn-sm" onclick="ir('ventas')">${ico('carrito')} Nueva venta</button>`);
   $('#tope-rapidos').innerHTML = rap.join('');
@@ -5417,7 +5443,7 @@ function agregarAMiOrden(cod){
   if (!l.length){ error('No tenés drones a cargo en el taller'); return; }
   if (l.length === 1){ pedirRepuestos(l[0].id); pedirAgregar(cod); return; }
   abrirModal({ titulo:'¿Para qué dron es?', sub:esc((producto(cod) || {}).nombre || cod),
-    cuerpo:`<div class="lista-ord">${l.map(o => `<button class="lo-fila" onclick="pedirRepuestos('${o.id}');pedirAgregar('${esc(cod)}')"><div class="lo-foto">${fotoDron(o.modelo, Number(o.num.slice(-3)))}</div>
+    cuerpo:`<div class="lista-ord">${l.map(o => `<button class="lo-fila" onclick="pedirRepuestos('${o.id}');pedirAgregar('${esc(cod)}')"><div class="lo-foto">${fotoOrden(o)}</div>
       <div class="lo-txt"><b>${o.num} · ${modeloTxt(o.modelo)}</b><small>${esc(nomCli(o.cli))}</small></div><div class="lo-der">${chipOrden(o)}</div></button>`).join('')}</div>` });
 }
 // Precio final, disponible y ubicación (lo mismo que ve la tablet del mostrador)
@@ -5443,7 +5469,7 @@ function fichaOrden(id){
   const e = ESTADOS_ORDEN[o.estado], dr = dron(o.dron);
   abrirModal({ titulo:`${o.num} · ${modeloTxt(o.modelo)}`, sub:`${esc(nomCli(o.cli))} · ingresó ${cuando(o.f)} (${fCorta(o.f)} ${o.h})`, ancho:'ancho',
     cuerpo:`<div class="fo-grid">
-      <div class="fo-foto">${fotoDron(o.modelo, Number(o.num.slice(-3)))}</div>
+      <div class="fo-foto">${fotoOrden(o)}</div>
       <div class="fo-datos">
         <div class="fo-fila">${chip(e.t, e.c)}${atrasada(o) ? chip(diasEnTaller(o) + ' días en el taller', 'rojo', 'reloj') : ''}${o.garantia && o.garantia.est === 'tramite' ? chip('En proceso de garantía', 'violeta', 'garantia') : ''}</div>
         <dl class="fo-dl"><dt>Chasis</dt><dd class="num">${o.chasis}</dd><dt>Responsable</dt><dd>${avatar(nomUsuario(o.tec), 'chico')} ${esc(nomUsuario(o.tec))}</dd>
@@ -5474,7 +5500,7 @@ function panelJefe(v){
     <div class="enc">
       <div><div class="enc-pre">${fLarga(h)}</div><h1>${saludoHora()}, ${esc(u.nombre)}</h1>
         <p class="enc-sub">Hay <b>${act.filter(o => o.estado !== 'facturado').length} drones en el taller</b> · ${deHoy.length} entraron hoy${aprob.length ? ` · <b class="txt-ambar">${aprob.length} cosa${aprob.length === 1 ? '' : 's'} para aprobar</b>` : ''}</p></div>
-      <div class="enc-acc solo-pc"><button class="btn btn-linea" onclick="abrirEscaner()">${ico('escanear')} Escanear</button><button class="btn btn-prim" onclick="ir('recepcion')">${ico('dron')} Recibir dron</button></div>
+      <div class="enc-acc solo-pc"><button class="btn btn-linea" onclick="abrirEscaner()">${ico('escanear')} Escanear</button><button class="btn btn-prim" onclick="ir('recepcion')">${ico('recepcion')} Recibir</button></div>
     </div>
     ${aprob.length ? bloqueAprobar(aprob) : ''}
     <div class="kpis">
@@ -5522,7 +5548,7 @@ function kpiPanel(t, valor, serie, color, det, icono, alReves){
 
 function tarjetaDronHoy(o, i){
   return `<button class="dron-hoy" style="--i:${i}" onclick="fichaOrden('${o.id}')">
-    <div class="dh-foto">${fotoDron(o.modelo, Number(o.num.slice(-3)))}<span class="dh-hora">${o.h}</span></div>
+    <div class="dh-foto">${fotoOrden(o)}<span class="dh-hora">${o.h}</span></div>
     <div class="dh-txt"><div class="dh-top"><b>${modeloTxt(o.modelo)}</b>${chipOrden(o)}</div>
       <div class="dh-cli">${esc(nomCli(o.cli))}</div>
       <div class="dh-sint">${ico('alerta', 'chico')} ${esc(o.sintoma)}</div>
@@ -5864,7 +5890,7 @@ function listaEstado(k){
   const l = k === 'atrasadas' ? act.filter(atrasada) : act.filter(o => o.estado === k || (k === 'diagnostico' && o.estado === 'recibido'));
   const t = k === 'atrasadas' ? 'Órdenes atrasadas' : k === 'diagnostico' ? 'Recibidos y en diagnóstico' : ESTADOS_ORDEN[k].corto;
   abrirModal({ titulo:t, sub:l.length + ' orden' + (l.length === 1 ? '' : 'es'), cuerpo: l.length ? `<div class="lista-ord">${l.map(o => `<button class="lo-fila" onclick="fichaOrden('${o.id}')">
-      <div class="lo-foto">${fotoDron(o.modelo, Number(o.num.slice(-3)))}</div>
+      <div class="lo-foto">${fotoOrden(o)}</div>
       <div class="lo-txt"><b>${o.num} · ${modeloTxt(o.modelo)}</b><small>${esc(nomCli(o.cli))} · ${esc(o.sintoma)}</small></div>
       <div class="lo-der">${chipOrden(o)}<small>${avatar(nomUsuario(o.tec), 'chico')} ${esc(nomUsuario(o.tec))} · ${diasEnTaller(o)} d</small></div></button>`).join('')}</div>` : vacio('Nada por acá', 'No hay órdenes en este estado.') });
 }
@@ -5983,13 +6009,13 @@ function panelTecnico(v){
       <p class="enc-sub">Tenés <b>${mios.length} dron${mios.length === 1 ? '' : 'es'} a tu cargo</b>${hsHoy ? ` · llevás ${horas(hsHoy)} hoy` : ''}</p></div></div>
     ${ot ? `<button class="aviso-linea verde-l" onclick="ORD_TAB='horas';abrirOrden('${ot.id}')">${ico('reloj')}<span><b>El reloj está corriendo en la ${ot.num}</b> · desde las ${t.h}</span>${ico('der', 'chico')}</button>` : ''}
     <div class="gran-grid">
-      ${verRec ? B('dron', 'Recibir dron', "ir('recepcion')", 'prim') : ''}${verRep ? B('llave', 'Mis drones', "ir('reparaciones')") : ''}${B('escanear', 'Escanear', 'abrirEscaner()', 'verde')}
+      ${verRec ? B('recepcion', 'Recibir', "ir('recepcion')", 'prim') : ''}${verRep ? B('llave', 'Mis drones', "ir('reparaciones')") : ''}${B('escanear', 'Escanear', 'abrirEscaner()', 'verde')}
       ${verRep ? B('caja', 'Pedir repuesto', "elegirOrdenPara('pedir')") + B('volver', 'Devolver repuesto', "elegirOrdenPara('devolver')") + B('reloj', 'Cargar horas', "elegirOrdenPara('horas')") : ''}${puedeVer('ventas') ? B('carrito', 'Vender', "ir('ventas')") : ''}${B('aprobar', 'Mis pedidos', "document.getElementById('mis-pedidos').scrollIntoView({behavior:'smooth'})")}
     </div>
     <section class="tarjeta mt">
       <div class="tarjeta-cab"><span class="tarjeta-ico">${ico('dron')}</span><div><h3>Mis drones</h3><div class="sub">Los que recibiste o te asignaron</div></div></div>
       ${mios.length ? `<div class="mis-drones">${mios.map((o, i) => `<button class="md-card" style="--i:${i}" onclick="fichaOrden('${o.id}')">
-        <div class="md-foto">${fotoDron(o.modelo, Number(o.num.slice(-3)))}</div>
+        <div class="md-foto">${fotoOrden(o)}</div>
         <div class="md-txt"><b>${modeloTxt(o.modelo)}</b><span>${esc(nomCli(o.cli))}</span>${chipOrden(o)}<small class="num">${o.num} · ${diasEnTaller(o) ? 'hace ' + diasEnTaller(o) + ' días' : 'hoy ' + o.h}</small></div></button>`).join('')}</div>`
         : vacio('No tenés drones a cargo', 'Cuando recibas un dron, aparece acá.', `<button class="btn btn-prim" onclick="ir('recepcion')">${ico('dron')} Recibir un dron</button>`)}
     </section>
@@ -6202,6 +6228,7 @@ const carpetaOrden = o => `Fotos de recepciones / ${o.f.slice(0, 4)} / ${o.num}`
 // Las fotos de la recepción de una orden (las de ejemplo si la orden es de las sembradas)
 function fotosOrden(o){
   const k = o.check || {};
+  if (o.tipo) return fotosIng(k);
   return k.contenido ? fotosRec(k) : [{ foto:fotoEj('pantalla', 3 + (Number(o.num.slice(-3)) || 0)), t:'Horas de vuelo' }, { foto:Object.assign(fotoEj('dron', 7 + (Number(o.num.slice(-3)) || 0)), { modelo:o.modelo }), t:'Frente' }];
 }
 
@@ -6523,9 +6550,11 @@ function ordenAbiertaDron(chasis){
 
 RENDER.recepcion = v => {
   if (REC_LISTA) return pintarRecLista(v);
-  v.innerHTML = `${enc('Recepción del dron', `Checklist paso a paso · queda a nombre de quien recibe`, `<button class="btn btn-fantasma btn-sm" onclick="recEjemplo()">${ico('estrella')} Completar con un ejemplo</button><button class="btn btn-linea btn-sm" onclick="recEmpezarDeNuevo()">${ico('volver')} Empezar de nuevo</button>`)}
+  const t = recTipo(), tit = { dron:'Recepción del dron', generador:'Ingreso de generador', control:'Ingreso de control remoto' }[t];
+  v.innerHTML = `${enc(tit, `Checklist paso a paso · queda a nombre de quien recibe`, `<button class="btn btn-fantasma btn-sm" onclick="recEjemplo()">${ico('estrella')} Completar con un ejemplo</button><button class="btn btn-linea btn-sm" onclick="recEmpezarDeNuevo()">${ico('volver')} Empezar de nuevo</button>`)}
+    ${selectorRecTipo()}
     <div class="rec" id="rec"></div>`;
-  pintarRec();
+  if (t === 'dron') pintarRec(); else pintarIng();
 };
 function pintarRec(){
   const caja = $('#rec'); if (!caja) return;
@@ -6610,7 +6639,7 @@ const PASO_HTML = [
       ${campo('Estado', opciones('generador.estado', [['Bien', 'Bien', 'ok'], ['Con fallas', 'Con fallas', 'mal']], r.generador.estado, 'recOpc'))}
       ${campo('¿Qué le pasa?', `<input value="${esc(r.generador.sintoma)}" placeholder="Ej.: cuesta arrancar" oninput="recTxt('generador.sintoma',this.value)">`)}` : ''}`,
   // 8. Síntomas y observaciones
-  r => `${campo('Qué le pasa según el cliente', `<div class="frases">${(D().config.frases || FRASES_SINTOMA).map(f => `<button class="${r.frases.includes(f) ? 'on' : ''}" onclick="recFrase('${esc(f)}')">${r.frases.includes(f) ? ico('check', 'chico') : ''}${esc(f)}</button>`).join('')}</div>`, { req:true })}
+  r => `${campo('Qué le pasa según el cliente', `<div class="frases">${frasesRec().map((f, i) => `<button class="${r.frases.includes(f) ? 'on' : ''}" onclick="recFraseI(${i})">${r.frases.includes(f) ? ico('check', 'chico') : ''}${esc(f)}</button>`).join('')}<button class="frase-mas" onclick="recFraseNueva()">${ico('mas', 'chico')} Agregar</button></div>`, { req:true, ayuda:'Si falta una, agregala: queda en la lista para todo el taller.' })}
     ${campo('En palabras del cliente', `<textarea placeholder="Tocá el micrófono del teclado para dictar" oninput="recTxt('sintCli',this.value)">${esc(r.sintCli)}</textarea>`, { ayuda:'🎙 En el celular se puede dictar con el micrófono del teclado.' })}
     ${campo('Observaciones del técnico', `<textarea oninput="recTxt('obs',this.value)">${esc(r.obs)}</textarea>`)}`,
   // 9. Cierre
@@ -6738,6 +6767,13 @@ function recMotor(i){ const m = REC().dron.motores[i]; m.rev = !m.rev; m.u = usu
 // Elegir cómo está el motor ya cuenta como revisado (antes había que tildar aparte y no se entendía)
 function recMotorRes(i, x){ const m = REC().dron.motores[i]; m.res = x; m.rev = true; m.u = usuarioId(); recGuardar(); pintarRec(); }
 function recMotoresOK(){ REC().dron.motores.forEach(m => { m.rev = true; m.res = m.res || 'OK'; m.u = usuarioId(); }); recGuardar(); pintarRec(); }
+// Frases rápidas de síntomas (Configuración) + las que se eligieron y ya no están en la lista
+const frasesRec = () => { const l = listaCfg('frases', FRASES_SINTOMA); return l.concat(REC().frases.filter(f => !l.includes(f))); };
+function recFraseI(i){ const f = frasesRec()[i]; if (f) recFrase(f); }
+async function recFraseNueva(){
+  const f = await agregarALista('frases', FRASES_SINTOMA, 'Agregar un síntoma', 'las frases rápidas de síntomas'); if (!f) return;
+  const r = REC(); if (!r.frases.includes(f)) r.frases.push(f); recGuardar(); pintarRec(); avisar('Agregado: <b>' + esc(f) + '</b> · ya aparece para todos', 'check', { tilde:true });
+}
 function recFrase(f){ const r = REC(), i = r.frases.indexOf(f); if (i < 0) r.frases.push(f); else r.frases.splice(i, 1); recGuardar(); pintarRec(); }
 
 // Lo que falta en cada paso (no se puede confirmar sin chasis ni horas de vuelo; las fotos, solo si son obligatorias)
@@ -6780,11 +6816,13 @@ function marcarFaltante(sel){
   setTimeout(() => el.classList.remove('falta-aca'), 3400);
 }
 async function recEmpezarDeNuevo(){
+  if (recTipo() !== 'dron') return ingEmpezarDeNuevo();
   if (!await confirmar('¿Empezar de nuevo?', 'Se borra lo cargado en esta recepción.', 'Empezar de nuevo', true)) return;
   D().borradores[USUARIO] = recNuevo(); recGuardar(); pintarRec();
 }
 // Para mostrar la demo rápido: completa todos los pasos con un dron que NO esté en el taller
 function recEjemplo(){
+  if (recTipo() !== 'dron') return ingEjemplo();
   const act = ordenesActivas(), libres = D().drones.filter(d => !act.some(o => o.dron === d.id) && cliente(d.cli) && MODELOS[d.modelo]);
   const lista = libres.length ? libres : D().drones.filter(d => cliente(d.cli) && MODELOS[d.modelo]);
   const d = lista[Math.floor(Math.random() * lista.length)], c = cliente(d.cli), r = recNuevo();
@@ -6835,11 +6873,12 @@ function pintarRecLista(v){
       <button class="btn btn-prim btn-xl" onclick="comprobanteRecepcion('${o.id}')">${ico('imprimir')} Comprobante (2 copias)</button>
       <button class="btn btn-linea btn-xl" onclick="comprobanteRecepcion('${o.id}', true)">${ico('whatsapp')} Mandar por WhatsApp</button>
       <button class="btn btn-linea btn-xl" onclick="REC_LISTA=null; abrirOrden('${o.id}')">${ico('llave')} Ver la orden</button>
-      <button class="btn btn-fantasma btn-xl" onclick="REC_LISTA=null; ir('recepcion')">${ico('mas')} Recibir otro dron</button></div></div>`;
+      <button class="btn btn-fantasma btn-xl" onclick="REC_LISTA=null; ir('recepcion')">${ico('mas')} ${o.tipo === 'generador' ? 'Recibir otro generador' : o.tipo === 'control' ? 'Recibir otro control' : 'Recibir otro dron'}</button></div></div>`;
 }
 
 /* ---------- Comprobante de recepción en PDF: copia cliente y copia taller ---------- */
 async function comprobanteRecepcion(id, porWhats){
+  if ((orden(id) || {}).tipo) return comprobanteIngreso(id, porWhats);
   const o = orden(id), c = cliente(o.cli) || { nombre:nomCli(o.cli), tel:'', contacto:'' }, k = o.check || {}, ck = checkRec(o), doc = await nuevoPDF({ titulo:'Comprobante de recepción', sub:o.num });
   for (const copia of ['COPIA CLIENTE', 'COPIA TALLER']){
     if (copia === 'COPIA TALLER'){ doc.addPage(); await nuevoPDFEn(doc, o); }
@@ -6891,6 +6930,305 @@ function clienteNuevo(alCrear){
 }
 
 
+/* ===== js/13b-ingresos.js ===== */
+/* =====================================================================
+   INGRESO SUELTO: GENERADOR o CONTROL REMOTO (sin el dron)  · 10/11/2026
+   Igual que la recepción del dron pero más corto (5 pasos): datos, lo que trae
+   (batería / valija y batería externa), errores, fotos y cierre.
+   Crea una orden común (OR-…) con o.tipo = 'generador' | 'control' y o.dron = null:
+   aparece en Reparaciones, el panel y la ficha del cliente como cualquier otra.
+   Los errores son botones rápidos; cualquier técnico puede agregar uno nuevo
+   y queda en la lista para todos (Configuración › Recepción y reparaciones).
+   ===================================================================== */
+const ERRORES_GENERADOR = ['No arranca', 'Cuesta arrancar', 'Se apaga solo', 'No carga las baterías', 'Carga lento', 'Muestra un código de error',
+  'Pierde combustible o aceite', 'Hace un ruido raro', 'Sale humo', 'Golpe o daño'];
+const ERRORES_CONTROL = ['No enciende', 'No vincula con el dron', 'Pantalla rota o sin imagen', 'La pantalla táctil no responde', 'Un joystick no responde',
+  'Botón roto o trabado', 'No carga', 'La batería dura poco', 'Pierde la señal', 'Golpe o daño'];
+const CONTROLES_FABRICA = ['DJI RC Plus', 'DJI RC Plus 2', 'DJI Smart Controller', 'XAG ACS2', 'XAG ARC3 Pro'];
+
+const TIPOS_ING = {
+  generador:{ t:'Generador', ico:'generador', foto:'generador', pasos:['Datos del generador', 'Batería', 'Errores', 'Fotos', 'Cierre'], cfgErr:'erroresGenerador', defErr:ERRORES_GENERADOR,
+    fotos:[['frente', 'Frente', 1], ['panel', 'Panel de control', 1], ['placa', 'Placa con el N° de serie', 0], ['otra', 'Otra', 0]] },
+  control:{ t:'Control remoto', ico:'joystick', foto:'control', pasos:['Datos del control', 'Valija y batería externa', 'Errores', 'Fotos', 'Cierre'], cfgErr:'erroresControl', defErr:ERRORES_CONTROL,
+    fotos:[['frente', 'Pantalla y frente', 1], ['atras', 'Atrás', 1], ['placa', 'Etiqueta con el N° de serie', 0], ['otra', 'Otra', 0]] }
+};
+// Qué se recibe en «Recibir»: el dron completo (la recepción de siempre), solo un generador o solo un control
+const recTipo = () => ((D().recTipo || {})[USUARIO]) || 'dron';
+function elegirRecTipo(t){ (D().recTipo = D().recTipo || {})[USUARIO] = t; guardar(); REC_LISTA = null; ir('recepcion', true); }
+function selectorRecTipo(){
+  const t = recTipo(), op = [['dron', 'dron', 'Dron completo'], ['generador', 'generador', 'Solo generador'], ['control', 'joystick', 'Solo control remoto']];
+  return `<div class="rec-tipos" role="tablist">${op.map(([k, i, txt]) => `<button role="tab" class="${t === k ? 'on' : ''}" onclick="elegirRecTipo('${k}')">${ico(i)}<span>${txt}</span></button>`).join('')}</div>`;
+}
+
+// Listas que se pueden cambiar en Configuración (si nunca se cambiaron, la de fábrica)
+const listaCfg = (k, def) => { const v = cfgGet(k); return (Array.isArray(v) && v.length ? v : def).filter(x => x && x !== 'Otro'); };
+const erroresDe = tipo => listaCfg(TIPOS_ING[tipo].cfgErr, TIPOS_ING[tipo].defErr);
+const equiposDe = tipo => tipo === 'generador' ? listaCfg('generadores', GENERADORES_FABRICA) : listaCfg('controles', CONTROLES_FABRICA);
+// Nombre del equipo para la orden: «Generador D12000iE», «Control DJI RC Plus»
+function nombreEquipo(r){
+  const m = r.modelo === 'Otro' ? String(r.otroTxt || '').trim() : r.modelo;
+  if (r.tipo === 'control') return /^control/i.test(m) ? m : 'Control ' + m;
+  return /^(generador|cargador)/i.test(m) ? m : 'Generador ' + m;
+}
+// Ilustración de la orden: el dron o el equipo suelto
+function fotoOrden(o){ return o && o.tipo ? fotoHTML(fotoEj(TIPOS_ING[o.tipo] ? TIPOS_ING[o.tipo].foto : 'caja', Number(String(o.num).slice(-3)) || 5)) : fotoDron(o.modelo, Number(o.num.slice(-3))); }
+const tipoOrdenTxt = o => o && o.tipo ? TIPOS_ING[o.tipo].t : 'Dron';
+
+/* ---------- El borrador (uno por usuario y por tipo: si entra una llamada, sigue donde quedó) ---------- */
+function ingNuevo(tipo){
+  return { tipo, paso:0, cli:'', modelo:'', otroTxt:'', serie:'', horas:'', tec:esTecnico() ? USUARIO : 'tec1',
+    bateria:{ trae:'', estado:'', foto:null, nota:'' }, valija:{ trae:'', estado:'', foto:null }, batExt:{ trae:'', n:1, estado:'' },
+    errores:[], codigo:'', sintCli:'', obs:'', fotos:{}, entrega:'', conforme:false };
+}
+const ING = () => { const t = recTipo(), b = D().borradoresIng = D().borradoresIng || {}, u = b[USUARIO] = b[USUARIO] || {}; return u[t] || (u[t] = ingNuevo(t)); };
+function ingSet(ruta, v, sinPintar){
+  const p = ruta.split('.'); let o = ING(); p.slice(0, -1).forEach(k => { if (o[k] == null) o[k] = {}; o = o[k]; }); o[p[p.length - 1]] = v;
+  recGuardar(); if (!sinPintar) pintarIng();
+}
+const ingTxt = (ruta, v) => ingSet(ruta, v, true);
+const ingOpc = (ruta, v) => ingSet(ruta, v);
+async function ingFoto(ruta, ej, extra){
+  const f = ej ? Object.assign(fotoEj(ej), extra || {}) : await tomarFoto(); if (!f) return;
+  ingSet(ruta, f); if (!ej) avisar('Foto guardada en el Drive del taller', 'nube');
+}
+function slotIng(ruta, f, t, ej, oblig, extra){
+  oblig = oblig && fotosOblig();
+  return f ? fotoM(f, t + ' · ' + f.h, 'Fotos de recepciones / ' + hoy().slice(0, 4) + ' / (orden nueva)', `<button class="x" onclick="ingSet('${ruta}',null)" aria-label="Sacar la foto">${ico('x')}</button>`)
+    : `<button class="foto-btn ${oblig ? 'falta' : ''}" onclick="ingFoto('${ruta}')">${ico('camara')}<span>${oblig ? 'Sacar foto *' : 'Sacar foto'}</span></button><button class="foto-ej" onclick='ingFoto("${ruta}","${ej}",${JSON.stringify(extra || {}).replace(/'/g, '&#39;')})'>Usar foto de ejemplo</button>`;
+}
+// ¿Ese equipo (por N° de serie) ya está en el taller?
+function ordenAbiertaEquipo(tipo, serie){
+  const s = sinTildes(String(serie || '').trim()); if (!s) return null;
+  return ordenesActivas().find(o => o.tipo === tipo && sinTildes(o.chasis) === s) || null;
+}
+
+/* ---------- Pantalla ---------- */
+function pintarIng(){
+  const caja = $('#rec'); if (!caja) return;
+  const r = ING(), T = TIPOS_ING[r.tipo], n = T.pasos.length, pct = Math.round((r.paso + 1) / n * 100);
+  caja.innerHTML = `
+    <aside class="rec-pasos">${T.pasos.map((t, i) => `<button class="${i === r.paso ? 'on' : i < r.paso ? 'hecho' : ''}" ${i <= r.paso ? `onclick="ingIr(${i})"` : 'disabled'}><span>${i < r.paso ? ico('check') : i + 1}</span>${t}</button>`).join('')}</aside>
+    <section class="rec-caja tarjeta">
+      <div class="rec-avance"><div><small>${esc(T.t)} · paso ${r.paso + 1} de ${n}</small><b>${T.pasos[r.paso]}</b></div><span class="rec-g" id="rec-guardado">${ico('check', 'chico')} Guardado</span></div>
+      <div class="rec-barra"><i style="width:${pct}%"></i></div>
+      <div class="rec-cuerpo" id="rec-cuerpo">${ING_PASOS[r.paso](r, T)}</div>
+      <div class="rec-pie">${r.paso ? `<button class="btn btn-linea btn-xl" onclick="ingIr(${r.paso - 1})">${ico('izq')} Atrás</button>` : '<span></span>'}
+        ${r.paso < n - 1 ? `<button class="btn btn-prim btn-xl rec-sig" onclick="ingSiguiente()">Siguiente ${ico('der')}</button>` : `<button class="btn btn-verde btn-xl rec-sig" onclick="ingConfirmar()">${ico('check')} Confirmar ingreso</button>`}</div>
+    </section>`;
+  if (r.paso === 0) autocompletar($('#ing-cli'), opcClientes, x => ingSet('cli', x.v));
+}
+function ingIr(i){ ING().paso = i; recGuardar(); pintarIng(); scrollTo({ top:0 }); }
+
+const siNo = (ruta, v) => opciones(ruta, [['Sí', 'Sí', 'ok'], ['No', 'No']], v, 'ingOpc');
+const ING_PASOS = [
+  // 1. Datos
+  (r, T) => {
+    const c = cliente(r.cli), lista = equiposDe(r.tipo), ab = ordenAbiertaEquipo(r.tipo, r.serie);
+    return `<div class="rec-auto">${ico('reloj', 'chico')} ${fCorta(hoy())} · ${hora()} · recibe <b>${esc(nomUsuario(USUARIO))}</b></div>
+      ${campo('Cliente', c ? `<div class="elegido">${avatar(c.nombre)}<span><b>${esc(c.nombre)}</b><small>${esc(datosCli(c))}</small></span><button class="link" onclick="ingSet('cli','')">Cambiar</button></div>`
+        : `<div class="fila-in"><input id="ing-cli" placeholder="Buscá por nombre, RUT o localidad" autocomplete="off"><button class="btn btn-linea" onclick="clienteNuevo(id => ingSet('cli', id))">${ico('mas')} Nuevo</button></div>`, { req:true })}
+      ${campo(r.tipo === 'generador' ? 'Tipo de generador' : 'Modelo del control', `<div class="opciones modelos">${lista.map((m, i) => `<button type="button" class="opc ${r.modelo === m ? 'on' : ''}" onclick="ingModelo(${i})">${r.modelo === m ? ico('check') : ''}${esc(m)}</button>`).join('')}<button type="button" class="opc opc-mas ${r.modelo === 'Otro' ? 'on' : ''}" onclick="ingSet('modelo','Otro')">${ico('mas')} Otro</button></div>`, { req:true })}
+      ${r.modelo === 'Otro' ? campo('¿Cuál?', `<input value="${esc(r.otroTxt)}" placeholder="Marca y modelo" oninput="ingTxt('otroTxt',this.value)">`, { req:true }) : ''}
+      ${campo('N° de serie', `<div class="fila-in"><input class="num" value="${esc(r.serie)}" placeholder="Escaneá el código o escribilo" oninput="ingTxt('serie',this.value)" onchange="pintarIng()"><button class="btn btn-prim" onclick="ingEscanear()">${ico('qr')} Escanear</button></div>`, { req:true })}
+      ${ab ? `<div class="aviso-linea rojo rec-dup">${ico('alerta')}<span><b>Este ${r.tipo === 'generador' ? 'generador' : 'control'} ya está en el taller con la ${ab.num}</b> · ${esc(ESTADOS_ORDEN[ab.estado].t)} · a cargo de ${esc(nomUsuario(ab.tec))}.</span><button class="link" onclick="abrirOrden('${ab.id}')">Abrir</button></div>` : ''}
+      ${r.tipo === 'generador' ? campo('Horas de uso', `<div class="fila-in"><input inputmode="decimal" value="${esc(r.horas)}" placeholder="Si las muestra" oninput="ingTxt('horas',this.value)"><span class="sufijo">horas</span></div>`) : ''}
+      ${!esTecnico() ? campo('Técnico responsable', sel('tec', tecnicos().map(t => [t.id, t.nombre]), r.tec, `onchange="ingTxt('tec',this.value)"`), { ayuda:'Solo el técnico responsable puede trabajar en la orden.' }) : ''}`;
+  },
+  // 2. Lo que trae: batería (generador) · valija y batería externa (control)
+  r => r.tipo === 'generador'
+    ? `${campo('¿Viene con batería?', siNo('bateria.trae', r.bateria.trae), { req:true })}
+      ${r.bateria.trae === 'Sí' ? `${campo('¿Cómo está la batería?', opciones('bateria.estado', [['Bien', 'Bien', 'ok'], ['Descargada', 'Descargada', 'ambar'], ['Hinchada o golpeada', 'Hinchada o golpeada', 'mal']], r.bateria.estado, 'ingOpc'), { req:true })}
+        <div class="campo"><label>Foto de la batería${reqFoto()}</label><div class="fotos">${slotIng('bateria.foto', r.bateria.foto, 'Batería', 'bateria', true)}</div></div>
+        ${campo('Nota', `<input value="${esc(r.bateria.nota)}" placeholder="Ej.: borne flojo" oninput="ingTxt('bateria.nota',this.value)">`)}` : ''}`
+    : `${campo('¿Vino con valija?', siNo('valija.trae', r.valija.trae), { req:true })}
+      ${r.valija.trae === 'Sí' ? `${campo('¿Cómo está la valija?', opciones('valija.estado', [['Bien', 'Bien', 'ok'], ['Con daños', 'Con daños', 'mal']], r.valija.estado, 'ingOpc'), { req:true })}
+        <div class="campo"><label>Foto de la valija${r.valija.estado === 'Con daños' ? reqFoto() : ''}</label><div class="fotos">${slotIng('valija.foto', r.valija.foto, 'Valija', 'valija', r.valija.estado === 'Con daños')}</div></div>` : ''}
+      ${campo('¿Vino con batería externa?', siNo('batExt.trae', r.batExt.trae), { req:true })}
+      ${r.batExt.trae === 'Sí' ? `${campo('¿Cuántas?', contadorNum('batExt.n', r.batExt.n || 1, 1, 6, 'ingOpc'))}
+        ${campo('¿Cómo están?', opciones('batExt.estado', [['Bien', 'Bien', 'ok'], ['No cargan', 'No cargan', 'ambar'], ['Hinchadas o golpeadas', 'Hinchadas o golpeadas', 'mal']], r.batExt.estado, 'ingOpc'), { req:true })}` : ''}`,
+  // 3. Errores: botones rápidos + «Agregar error» (queda para todos) + código + lo que dice el cliente
+  (r, T) => {
+    const l = erroresDe(r.tipo), extra = r.errores.filter(e => !l.includes(e));
+    return `${campo('¿Qué errores tiene?', `<div class="frases">${l.concat(extra).map((e, i) => { const on = r.errores.includes(e); return `<button class="${on ? 'on' : ''}" onclick="ingError(${i})">${on ? ico('check', 'chico') : ''}${esc(e)}</button>`; }).join('')}
+        <button class="frase-mas" onclick="ingErrorNuevo()">${ico('mas', 'chico')} Agregar error</button></div>`, { req:true, ayuda:'Tocá todos los que correspondan. Si falta uno, agregalo: queda en la lista para todo el taller.' })}
+      ${campo('Código de error que muestra', `<input class="num" value="${esc(r.codigo)}" placeholder="${r.tipo === 'generador' ? 'Ej.: E-05' : 'Ej.: 30061'} (si muestra alguno)" oninput="ingTxt('codigo',this.value)">`)}
+      ${campo('En palabras del cliente', `<textarea placeholder="Tocá el micrófono del teclado para dictar" oninput="ingTxt('sintCli',this.value)">${esc(r.sintCli)}</textarea>`, { ayuda:'🎙 En el celular se puede dictar con el micrófono del teclado.' })}
+      ${campo('Observaciones del técnico', `<textarea oninput="ingTxt('obs',this.value)">${esc(r.obs)}</textarea>`)}`;
+  },
+  // 4. Fotos
+  (r, T) => `<p class="sutil">Sacale fotos al equipo como llega. ${fotosOblig() ? 'Las marcadas con * son obligatorias.' : ''}</p>
+    <div class="ing-fotos">${T.fotos.map(([k, t, ob]) => `<div class="campo"><label>${t}${ob ? reqFoto() : ''}</label><div class="fotos">${slotIng('fotos.' + k, r.fotos[k], t, k === 'placa' ? 'chasis' : T.foto, !!ob, k === 'placa' ? { valor:r.serie || '' } : null)}</div></div>`).join('')}</div>`,
+  // 5. Cierre
+  (r, T) => {
+    const fotos = fotosIng(r), ab = ordenAbiertaEquipo(r.tipo, r.serie);
+    const trae = r.tipo === 'generador' ? [['Batería', r.bateria.trae === 'Sí' ? 'Sí · ' + (r.bateria.estado || '—') : r.bateria.trae || '—']]
+      : [['Valija', r.valija.trae === 'Sí' ? 'Sí · ' + (r.valija.estado || '—') : r.valija.trae || '—'], ['Batería externa', r.batExt.trae === 'Sí' ? (r.batExt.n || 1) + ' · ' + (r.batExt.estado || '—') : r.batExt.trae || '—']];
+    return `<div class="rec-resumen">
+        <div><small>Cliente</small><b>${esc(nomCli(r.cli))}</b></div><div><small>${esc(T.t)}</small><b>${r.modelo ? esc(nombreEquipo(r)) : '—'}</b></div>
+        <div><small>N° de serie</small><b class="num">${esc(r.serie) || '—'}</b></div>${r.tipo === 'generador' ? `<div><small>Horas de uso</small><b class="num">${esc(r.horas) || '—'}</b></div>` : ''}
+        ${trae.map(([t, x]) => `<div><small>${t}</small><b>${esc(x)}</b></div>`).join('')}<div><small>Fotos</small><b>${fotos.length}</b></div>
+        <div class="ancho"><small>Errores</small><b>${esc(r.errores.concat(r.codigo ? ['Código ' + r.codigo] : []).join(' · ') || r.sintCli || '—')}</b></div>
+        <div class="ancho"><small>Responsable</small><b>${esc(nomUsuario(r.tec))}</b></div></div>
+      ${ab ? `<div class="aviso-linea rojo">${ico('alerta')}<span><b>Ojo: este equipo ya tiene abierta la ${ab.num}</b>. Al confirmar se crea otra orden.</span></div>` : ''}
+      <div class="fotos mt">${fotos.map(f => fotoM(f.foto, f.t, 'Fotos de recepciones / ' + hoy().slice(0, 4) + ' / (orden nueva)')).join('')}</div>
+      ${campo('Quién lo entrega', `<input value="${esc(r.entrega)}" placeholder="Nombre de quien lo trae" oninput="ingTxt('entrega',this.value)">`, { req:true })}
+      <label class="conforme ${r.conforme ? 'on' : ''}"><input type="checkbox" ${r.conforme ? 'checked' : ''} onchange="ingSet('conforme',this.checked)"><span>${ico('check')}</span>El cliente está conforme con el estado en que se recibe el equipo</label>`;
+  }
+];
+function fotosIng(r){
+  const l = [], T = TIPOS_ING[r.tipo] || TIPOS_ING.generador, add = (f, t) => { if (f && typeof f === 'object') l.push({ foto:f, t }); };
+  T.fotos.forEach(([k, t]) => add((r.fotos || {})[k], t));
+  add((r.bateria || {}).foto, 'Batería'); add((r.valija || {}).foto, 'Valija');
+  return l;
+}
+
+/* ---------- Acciones ---------- */
+function ingModelo(i){ ingSet('modelo', equiposDe(ING().tipo)[i]); }
+function ingError(i){
+  const r = ING(), l = erroresDe(r.tipo), todos = l.concat(r.errores.filter(e => !l.includes(e))), e = todos[i]; if (!e) return;
+  const k = r.errores.indexOf(e); if (k < 0) r.errores.push(e); else r.errores.splice(k, 1); recGuardar(); pintarIng();
+}
+// Agregar un error a la lista: lo puede hacer cualquier técnico y queda para todos
+async function agregarALista(k, def, titulo, lista){
+  const t = String(await pedirTexto(titulo, '', 'Queda en la lista para todo el taller') || '').trim(); if (!t) return null;
+  const l = listaCfg(k, def), ya = l.find(x => sinTildes(x) === sinTildes(t));
+  if (!ya){ D().config[k] = l.concat(t); registrar(`Agregó «${t}» a ${lista}`, '', 'config'); guardar(); _cache = {}; }
+  return ya || t;
+}
+async function ingErrorNuevo(){
+  const r = ING(), T = TIPOS_ING[r.tipo], g = r.tipo === 'generador';
+  const e = await agregarALista(T.cfgErr, T.defErr, 'Agregar un error ' + (g ? 'del generador' : 'del control remoto'), 'los errores ' + (g ? 'de generadores' : 'de controles remotos')); if (!e) return;
+  if (!r.errores.includes(e)) r.errores.push(e); recGuardar(); pintarIng(); avisar('Error agregado: <b>' + esc(e) + '</b> · ya aparece para todos', 'check', { tilde:true });
+}
+function ingEscanear(){
+  const r = ING();
+  abrirEscaner({ titulo:'Escanear el N° de serie', sub:r.tipo === 'generador' ? 'Código de la placa del generador' : 'Etiqueta del control remoto', alLeer:txt => { ingSet('serie', serieDe(txt)); avisar('Código leído: N° de serie <b>' + esc(ING().serie) + '</b>', 'qr', { tilde:true }); },
+    ejemplos:[[(r.tipo === 'generador' ? 'D12K' : '5FN') + Math.random().toString(36).slice(2, 10).toUpperCase(), 'Un equipo nuevo']] });
+}
+function faltaIng(r, p){
+  const f = [], ob = fotosOblig(), T = TIPOS_ING[r.tipo];
+  if (p === 0){ if (!r.cli) f.push('el cliente'); if (!r.modelo) f.push(r.tipo === 'generador' ? 'el tipo de generador' : 'el modelo del control'); if (r.modelo === 'Otro' && !String(r.otroTxt).trim()) f.push('cuál es el equipo'); if (!String(r.serie).trim()) f.push('el N° de serie'); }
+  if (p === 1 && r.tipo === 'generador'){ if (!r.bateria.trae) f.push('si viene con batería'); else if (r.bateria.trae === 'Sí'){ if (!r.bateria.estado) f.push('el estado de la batería'); if (ob && !r.bateria.foto) f.push('la foto de la batería'); } }
+  if (p === 1 && r.tipo === 'control'){ if (!r.valija.trae) f.push('si vino con valija'); else if (r.valija.trae === 'Sí'){ if (!r.valija.estado) f.push('el estado de la valija'); if (ob && r.valija.estado === 'Con daños' && !r.valija.foto) f.push('la foto de la valija'); }
+    if (!r.batExt.trae) f.push('si vino con batería externa'); else if (r.batExt.trae === 'Sí' && !r.batExt.estado) f.push('cómo están las baterías externas'); }
+  if (p === 2){ if (!r.errores.length && !String(r.sintCli).trim()) f.push('qué errores tiene'); }
+  if (p === 3 && ob){ T.fotos.filter(x => x[2] && !(r.fotos || {})[x[0]]).forEach(x => f.push('la foto «' + x[1] + '»')); }
+  if (p === 4){ if (!String(r.entrega).trim()) f.push('quién lo entrega'); if (!r.conforme) f.push('la conformidad del cliente'); }
+  return f;
+}
+function ingSiguiente(){
+  const r = ING(), f = faltaIng(r, r.paso);
+  if (f.length){ error('Falta ' + f.join(', ')); marcarFaltante('#rec-cuerpo'); return; }
+  ingIr(r.paso + 1);
+}
+async function ingEmpezarDeNuevo(){
+  if (!await confirmar('¿Empezar de nuevo?', 'Se borra lo cargado en este ingreso.', 'Empezar de nuevo', true)) return;
+  D().borradoresIng[USUARIO][recTipo()] = ingNuevo(recTipo()); recGuardar(); pintarIng();
+}
+// Para mostrar la demo rápido
+function ingEjemplo(){
+  const tipo = recTipo(), r = ingNuevo(tipo), cs = D().clientes.filter(c => !c.inactivo), c = cs[Math.floor(Math.random() * cs.length)], l = equiposDe(tipo), F = t => fotoEj(t);
+  Object.assign(r, { cli:c.id, modelo:l[Math.floor(Math.random() * l.length)], serie:(tipo === 'generador' ? 'D12K' : '5FN') + Math.random().toString(36).slice(2, 10).toUpperCase(),
+    entrega:c.contacto || 'Encargado de ' + (c.fantasia || c.nombre), conforme:true, paso:4 });
+  if (tipo === 'generador'){ Object.assign(r, { horas:String(180 + Math.floor(Math.random() * 600)), errores:['Cuesta arrancar', 'No carga las baterías'], codigo:'E-05', sintCli:'Arranca después de varios intentos y cuando arranca no carga las baterías del dron.' });
+    r.bateria = { trae:'Sí', estado:'Descargada', foto:F('bateria'), nota:'' }; r.fotos = { frente:F('generador'), panel:F('generador'), placa:Object.assign(F('chasis'), { valor:r.serie }) }; }
+  else { Object.assign(r, { errores:['No vincula con el dron', 'La batería dura poco'], codigo:'30061', sintCli:'Dejó de vincular con el T50 después de una actualización.' });
+    r.valija = { trae:'Sí', estado:'Bien', foto:F('valija') }; r.batExt = { trae:'Sí', n:2, estado:'Bien' }; r.fotos = { frente:F('control'), atras:F('control'), placa:Object.assign(F('chasis'), { valor:r.serie }) }; }
+  D().borradoresIng[USUARIO][tipo] = r; recGuardar(); pintarIng(); scrollTo({ top:0 });
+  avisar('Ingreso completado con un ejemplo: revisalo y confirmá', 'estrella');
+}
+async function ingConfirmar(){
+  const r = ING(), T = TIPOS_ING[r.tipo], faltan = T.pasos.map((_, i) => faltaIng(r, i)).map((f, i) => f.length ? i : -1).filter(i => i >= 0);
+  if (faltan.length){ error('Falta completar: ' + faltan.map(i => T.pasos[i]).join(', ')); ingIr(faltan[0]); setTimeout(() => marcarFaltante('#rec-cuerpo'), 350); return; }
+  const ab = ordenAbiertaEquipo(r.tipo, r.serie);
+  if (ab && !await confirmar('Este equipo ya está en el taller', `Tiene abierta la <b>${ab.num}</b> (${esc(ESTADOS_ORDEN[ab.estado].t)}, a cargo de ${esc(nomUsuario(ab.tec))}). ¿Crear otra orden igual?`, 'Crear otra orden', true)) return;
+  const anio = hoy().slice(0, 4), num = 'OR-' + anio + '-' + String(D().numOR = (D().numOR || 150) + 1).padStart(4, '0'), eq = nombreEquipo(r);
+  const sint = r.errores.concat(r.codigo ? ['Código ' + r.codigo] : [], r.sintCli ? [r.sintCli] : []).join(' · ');
+  const o = { id:'o' + Date.now().toString(36), num, f:hoy(), h:hora(), tipo:r.tipo, dron:null, cli:r.cli, modelo:eq, chasis:String(r.serie).trim(), tec:r.tec, recibio:USUARIO, estado:'recibido',
+    horasVuelo:r.tipo === 'generador' ? numero(r.horas) : 0, sintoma:sint, obs:r.obs, repuestos:[], horas:[], fotos:fotosIng(r).length, bateriasN:0, entrega:r.entrega, conforme:true,
+    check:JSON.parse(JSON.stringify(r)), hist:[{ f:hoy(), h:hora(), u:USUARIO, a:`Recibió el ${r.tipo === 'generador' ? 'generador' : 'control remoto'} con su checklist completo` }], creado:{ u:USUARIO, f:hoy(), h:hora() } };
+  delete o.check.paso;
+  if (ab) o.hist.push({ f:hoy(), h:hora(), u:USUARIO, a:`Se recibió aunque el equipo ya tenía abierta la ${ab.num}` });
+  if (r.tec !== USUARIO) o.hist.push({ f:hoy(), h:hora(), u:USUARIO, a:'Asignó como responsable a ' + nomUsuario(r.tec) });
+  D().ordenes.unshift(o);
+  registrar(`Recibió ${r.tipo === 'generador' ? 'el generador' : 'el control remoto'} · ${eq} de ${nomCli(r.cli)}`, num, 'recepcion');
+  D().borradoresIng[USUARIO][r.tipo] = ingNuevo(r.tipo); guardar(); _cache = {};
+  REC_LISTA = o.id; armarNav(); ir('recepcion');
+}
+
+/* ---------- En la ficha de la orden ---------- */
+function datosEquipoHTML(o){
+  const k = o.check || {}, g = o.tipo === 'generador';
+  const filas = [['N° de serie', `<span class="num">${esc(o.chasis || '—')}</span>`]]
+    .concat(g ? [['Horas de uso', o.horasVuelo ? `<span class="num">${num(o.horasVuelo)} h</span>` : '—'], ['Batería', esc(k.bateria && k.bateria.trae === 'Sí' ? 'Sí · ' + (k.bateria.estado || '—') : (k.bateria || {}).trae || '—')]]
+      : [['Valija', esc(k.valija && k.valija.trae === 'Sí' ? 'Sí · ' + (k.valija.estado || '—') : (k.valija || {}).trae || '—')], ['Batería externa', esc(k.batExt && k.batExt.trae === 'Sí' ? (k.batExt.n || 1) + ' · ' + (k.batExt.estado || '—') : (k.batExt || {}).trae || '—')]]);
+  return filas.map(([t, x]) => `<dt>${t}</dt><dd>${x}</dd>`).join('');
+}
+// Los errores ya se ven arriba (en el síntoma de la orden): acá solo las notas
+function resumenIngreso(o){
+  const k = o.check || {}, notas = [(k.bateria || {}).nota && 'Batería: ' + k.bateria.nota, o.obs && 'Técnico: ' + o.obs].filter(Boolean);
+  return notas.length ? `<ul class="chk-notas">${notas.map(n => `<li>${esc(n)}</li>`).join('')}</ul>` : '';
+}
+// Comprobante de recepción del equipo suelto (2 copias, como el del dron)
+async function comprobanteIngreso(id, porWhats){
+  const o = orden(id), c = cliente(o.cli) || { nombre:nomCli(o.cli), tel:'', contacto:'' }, k = o.check || {}, g = o.tipo === 'generador', doc = await nuevoPDF({ titulo:'Comprobante de recepción', sub:o.num });
+  for (const copia of ['COPIA CLIENTE', 'COPIA TALLER']){
+    if (copia === 'COPIA TALLER'){ doc.addPage(); await nuevoPDFEn(doc, o); }
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(...PDF_HOJA); doc.text(copia, 14, doc.y - 2); doc.y += 4;
+    pdfDatos(doc, [['Orden', o.num], ['Fecha', fCorta(o.f) + ' ' + o.h], ['Cliente', c.nombre], ['Teléfono', c.tel || '—'], [g ? 'Generador' : 'Control remoto', modeloTxt(o.modelo)], ['N° de serie', o.chasis]]
+      .concat(g ? [['Horas de uso', o.horasVuelo ? num(o.horasVuelo) + ' h' : '—']] : []).concat([['Recibió', nomUsuario(o.recibio)], ['Responsable', nomUsuario(o.tec)], ['Entregó', o.entrega || c.contacto || '—']]), 'Datos del ingreso');
+    const b = k.bateria || {}, v = k.valija || {}, be = k.batExt || {};
+    const filas = g ? [['Batería', b.trae || '—', [b.estado, b.nota].filter(Boolean).join(' · ')]]
+      : [['Valija', v.trae || '—', v.estado || ''], ['Batería externa', be.trae === 'Sí' ? 'Sí · ' + (be.n || 1) : be.trae || '—', be.estado || '']];
+    pdfTitulo(doc, 'Checklist'); pdfTabla(doc, ['Ítem', 'Trae', 'Estado'], filas, { columnStyles:{ 0:{ cellWidth:62 }, 1:{ cellWidth:38 } } });
+    pdfTitulo(doc, 'Errores'); pdfTexto(doc, (k.errores || []).join(' · ') || '—'); if (k.codigo) pdfTexto(doc, 'Código que muestra: ' + k.codigo);
+    if (k.sintCli) pdfTexto(doc, 'Según el cliente: ' + k.sintCli, { color:PDF_GRIS }); if (o.obs) pdfTexto(doc, 'Observaciones del técnico: ' + o.obs, { color:PDF_GRIS });
+    await pdfFotos(doc, fotosIng(k).slice(0, 10), 'Fotos');
+    pdfTexto(doc, 'El cliente declara estar conforme con el estado en que se recibe el equipo. El diagnóstico y el presupuesto se informan por separado.', { tam:8.5, color:PDF_GRIS });
+    pdfFirmas(doc, 'Entrega: ' + (o.entrega || c.contacto || ''), 'Recibe: ' + nomUsuario(o.recibio));
+  }
+  pdfPie(doc, o.num);
+  docListo(doc, `Recepcion ${o.num} - ${c.nombre}.pdf`, { tel:c.tel, ref:o.num, sec:'recepcion',
+    texto:`${hola(c)}, te escribimos de Drones del Pampa. Recibimos tu ${modeloTxt(o.modelo)} (N° de serie ${o.chasis}) con la orden ${o.num}. Te mandamos el comprobante de recepción con el checklist y las fotos. Cualquier novedad te avisamos.` });
+  if (porWhats) setTimeout(() => avisar('Tocá «WhatsApp» para mandarlo', 'whatsapp'), 400);
+}
+
+/* ---------- Datos de ejemplo: algunos generadores y controles en el taller (lo llama 05-ejemplo.js) ---------- */
+function sembrarIngresosEj(d, ords, x){
+  const { elegir, entre, hh, fe, duenos, h } = x, F = (t, o, extra) => fe(t, o.f, o.h, o.recibio, extra);
+  // Los cuatro que están hoy en el taller, del más viejo al más nuevo (la numeración sigue la fecha)
+  const CASOS = [
+    ['generador', 3, 'reparacion', 'tec3', ['No carga las baterías', 'Carga lento'], '', 'Carga una batería en más de una hora.'],
+    ['control', 2, 'terminado', 'tec1', ['Un joystick no responde'], '', 'El joystick izquierdo no responde hacia arriba.'],
+    ['control', 1, 'diagnostico', 'tec2', ['No vincula con el dron'], '30061', 'No vincula con el T50 después de actualizar.'],
+    ['generador', 0, 'recibido', 'tec1', ['No arranca'], 'E-05', 'Lo dejaron afuera con la lluvia y desde ahí no arranca.']
+  ];
+  CASOS.forEach(([tipo, dias, est, tec, errs, cod, dice], i) => {
+    let f = sumarDias(h, -dias); while ((aFecha(f).getDay() + 6) % 7 > 5) f = sumarDias(f, -1);
+    const cli = elegir(duenos).id, modelo = tipo === 'generador' ? elegir(GENERADORES_FABRICA) : 'Control ' + elegir(CONTROLES_FABRICA.slice(0, 3));
+    const serie = (tipo === 'generador' ? 'D12K' : '5FN') + (7310 + i * 137) + 'Q' + (i + 2) + 'B', n = ords.length + 1;
+    const o = { id:'o' + n, num:'OR-' + h.slice(0, 4) + '-' + String(n).padStart(4, '0'), f, h:dias ? hh(8, 16) : '10:05', tipo, dron:null, cli, modelo, chasis:serie, tec, recibio:tec, estado:est,
+      horasVuelo:tipo === 'generador' ? entre(150, 900) : 0, sintoma:errs.concat(cod ? ['Código ' + cod] : [], [dice]).join(' · '), obs:'', repuestos:[], horas:[], fotos:0, bateriasN:0,
+      entrega:elegir(['El titular', 'Encargado de campo', 'Piloto de la empresa']), conforme:true, hist:[] };
+    const k = Object.assign(ingNuevo(tipo), { tipo, cli, modelo:modelo.replace(/^Control /, ''), serie, horas:o.horasVuelo ? String(o.horasVuelo) : '', tec, errores:errs, codigo:cod, sintCli:dice, entrega:o.entrega, conforme:true });
+    delete k.paso;
+    if (tipo === 'generador'){ const trae = i % 2 === 0; k.bateria = { trae:trae ? 'Sí' : 'No', estado:trae ? 'Descargada' : '', foto:trae ? F('bateria', o) : null, nota:'' };
+      k.fotos = { frente:F('generador', o), panel:F('generador', o), placa:F('chasis', o, { valor:serie }) }; }
+    else { k.valija = { trae:i % 3 === 1 ? 'Sí' : 'No', estado:i % 3 === 1 ? 'Bien' : '', foto:i % 3 === 1 ? F('valija', o) : null }; k.batExt = { trae:'Sí', n:entre(1, 2), estado:'Bien' };
+      k.fotos = { frente:F('control', o), atras:F('control', o), placa:F('chasis', o, { valor:serie }) }; }
+    o.check = k; o.fotos = fotosIng(k).length; o.creado = { u:tec, f, h:o.h };
+    o.hist.push({ f, h:o.h, u:tec, a:`Recibió el ${tipo === 'generador' ? 'generador' : 'control remoto'} con su checklist completo` });
+    const pasos = ['recibido', 'diagnostico', 'reparacion', 'terminado', 'entregado'], hasta = pasos.indexOf(est);
+    for (let p = 1; p <= hasta; p++){ const fp = sumarDias(f, Math.min(p, Math.max(0, dias))) > h ? h : sumarDias(f, Math.min(p, Math.max(0, dias)));
+      o.hist.push({ f:fp, h:hh(9, 17), u:p === 4 ? 'florencia' : tec, a:`Cambió el estado de «${ESTADOS_ORDEN[pasos[p - 1]].t}» a «${ESTADOS_ORDEN[pasos[p]].t}»` }); }
+    if (hasta >= 2){ const fh = sumarDias(f, 1) > h ? h : sumarDias(f, 1), txt = tipo === 'generador' ? 'Revisión del sistema de carga y limpieza del carburador' : 'Revisión de la placa y prueba de vinculación';
+      o.horas.push({ f:fh, h:2.5, u:tec, txt }); o.hist.push({ f:fh, h:'15:30', u:tec, a:`Cargó ${horas(2.5)}: ${txt}` }); }
+    if (est === 'entregado'){ o.fEntrega = sumarDias(f, 4); o.retiro = 'el titular'; o.hist.push({ f:o.fEntrega, h:'16:20', u:'florencia', a:'Entregado al cliente · retiró el titular' }); }
+    ords.push(o);
+  });
+}
+
+
 /* ===== js/14-reparaciones.js ===== */
 /* =====================================================================
    REPARACIONES · cada dron que entra tiene su orden (OR-2026-0142).
@@ -6916,7 +7254,7 @@ function pintarTaller(v){
   const todas = ordenesVisibles(), act = todas.filter(o => o.estado !== 'entregado');
   const gar = D().ordenes.filter(o => !o.anulado && o.garantia && (o.garantia.est === 'tramite' || o.estado === 'garantia') && (!esTecnico() || o.tec === USUARIO));
   v.innerHTML = `${enc(esTecnico() ? 'Mis reparaciones' : 'Reparaciones', `<b>${act.length}</b> órdenes abiertas${act.filter(atrasada).length ? ` · <b class="txt-rojo">${act.filter(atrasada).length} atrasadas</b>` : ''}`,
-      `<button class="btn btn-prim" onclick="ir('recepcion')">${ico('dron')} Recibir dron</button>`)}
+      `<button class="btn btn-prim" onclick="ir('recepcion')">${ico('recepcion')} Recibir</button>`)}
     ${pestanas([['tablero', 'Tablero'], ['lista', 'Lista', todas.length], ['garantias', 'Garantías', gar.length]], TALLER.vista, 'tallerVista')}
     ${TALLER.vista !== 'garantias' ? `<div class="barra-filtros">${buscadorLocal('t-q', TALLER.q, 'Buscar orden, chasis, cliente o síntoma…', 'tallerBuscar')}
       ${esJefe() ? `<select class="filtro" onchange="TALLER.tec=this.value;ir('reparaciones',true)"><option value="">Todos los técnicos</option>${tecnicos().map(t => `<option value="${t.id}" ${TALLER.tec === t.id ? 'selected' : ''}>${esc(t.nombre)}</option>`).join('')}</select>` : ''}
@@ -6940,7 +7278,7 @@ function tablero(l){
 function tarjetaOrden(o){
   const dias = diasEnTaller(o), pend = D().aprobaciones.some(a => a.est === 'pendiente' && a.orden === o.id), urg = D().aprobaciones.some(a => a.est === 'pendiente' && a.orden === o.id && a.urgente);
   return `<div class="t-ord ${TALLER.recien === o.id ? 'llega' : ''} ${atrasada(o) ? 'atr' : ''}" draggable="${esCel() ? 'false' : 'true'}" data-id="${o.id}" onclick="abrirOrden('${o.id}')">
-    <div class="to-foto">${fotoDron(o.modelo, Number(o.num.slice(-3)))}</div>
+    <div class="to-foto">${fotoOrden(o)}</div>
     <div class="to-txt"><div class="to-top"><b class="num">${o.num.slice(-4)}</b><span class="to-d ${atrasada(o) ? 'rojo' : ''}">${dias ? dias + ' d' : 'hoy'}</span></div>
       <b class="to-m">${modeloTxt(o.modelo).replace('DJI ', '')}</b><span class="to-c">${esc(nomCli(o.cli))}</span>
       <div class="to-pie">${avatar(nomUsuario(o.tec), 'chico')}${urg ? `<span class="chip c-rojo">${ico('urgente')}</span>` : pend ? `<span class="chip c-ambar" title="Esperando aprobación">${ico('reloj')}</span>` : ''}${o.garantia && o.garantia.est === 'tramite' ? `<span class="chip c-violeta">${ico('garantia')}</span>` : ''}</div></div></div>`;
@@ -6991,7 +7329,7 @@ function listaOrdenes(l){
   return `<div class="barra-filtros">${pildoras([['activas', 'En el taller', cuenta('activas')]].concat(ORDEN_ESTADOS.map(k => [k, ESTADOS_ORDEN[k].corto, cuenta(k), ESTADOS_ORDEN[k].c])).concat([['anuladas', 'Anuladas', l.length - vivas.length, 'gris'], ['todas', 'Todas', l.length]]), TALLER.estado, 'tallerEstado')}
       <div class="der"><button class="btn btn-linea btn-sm" onclick="exportarOrdenes()" title="Baja lo que se ve con este filtro">${ico('descargar')} Excel</button></div></div>
     ${tabla([
-      { t:'Orden', k:o => `<div class="celda-p"><div class="mini-foto">${fotoDron(o.modelo, Number(o.num.slice(-3)))}</div><span><b class="num">${o.num}</b><small>${modeloTxt(o.modelo)}</small></span></div>` },
+      { t:'Orden', k:o => `<div class="celda-p"><div class="mini-foto">${fotoOrden(o)}</div><span><b class="num">${o.num}</b><small>${modeloTxt(o.modelo)}</small></span></div>` },
       { t:'Cliente', k:o => esc(nomCli(o.cli)) },
       { t:'Estado', k:o => o.anulado ? `${chip('Anulada', 'gris', 'anular')}<small class="anul-m">${esc(o.anulado.motivo)}</small>` : chipOrden(o) },
       { t:'Responsable', k:o => `<span class="celda-p">${avatar(nomUsuario(o.tec), 'chico')}${esc(nomUsuario(o.tec))}</span>` },
@@ -7043,7 +7381,7 @@ function pintarOrden(v, id){
   const garAbierta = o.garantia && o.garantia.est === 'tramite';
   v.innerHTML = `<button class="volver-link" onclick="SUB={};ir('reparaciones')">${ico('izq')} ${esTecnico() ? 'Mis reparaciones' : 'Reparaciones'}</button>
     <div class="ord-cab">
-      <div class="oc-foto">${fotoDron(o.modelo, Number(o.num.slice(-3)))}</div>
+      <div class="oc-foto">${fotoOrden(o)}</div>
       <div class="oc-txt"><div class="oc-pre num">${o.num} · ingresó ${cuando(o.f)} (${fCorta(o.f)} ${o.h})</div>
         <h1>${modeloTxt(o.modelo)}</h1>
         <div class="oc-cli">${esc(c.nombre)}${c.fantasia ? ' · ' + esc(c.fantasia) : ''} <button class="icon-btn wa" onclick="abrirWhatsApp('${esc(c.tel || '')}','${esc(hola(c))}, te escribimos de Drones del Pampa por tu ${modeloTxt(o.modelo)} (orden ${o.num}).')" title="WhatsApp al cliente">${ico('whatsapp')}</button></div>
@@ -7065,16 +7403,18 @@ function pintarOrden(v, id){
       ${enTaller(o) ? `<button class="btn btn-verde" onclick="terminarOrden('${o.id}')">${ico('check')} Terminar</button>` : ''}</div>` : ''}
     <div class="ord-grid">
       <aside class="ord-lado">
+        ${o.tipo ? `<div class="tarjeta"><h4 class="lado-t">Datos del ${o.tipo === 'generador' ? 'generador' : 'control remoto'}</h4><dl class="fo-dl">${datosEquipoHTML(o)}
+          <dt>Fecha de entrega</dt><dd>${o.fEntregaComp ? `<b class="num">${fCorta(o.fEntregaComp)}</b> ` : '<span class="sutil">Sin fecha</span> '}${!o.anulado && o.estado !== 'entregado' && typeof fijarEntrega === 'function' && (esJefe() || mia) ? `<button class="link" onclick="fijarEntrega('${o.id}')">${o.fEntregaComp ? 'Cambiar' : 'Fijar'}</button>` : ''}</dd></dl></div>` : `
         <div class="tarjeta"><h4 class="lado-t">Datos del dron</h4><dl class="fo-dl">
           <dt>Chasis</dt><dd class="num">${esc(o.chasis)}</dd><dt>Horas de vuelo</dt><dd class="num">${num(o.horasVuelo)} h</dd>
           <dt>Comprado en</dt><dd>${esc(dr.compra || '—')}</dd><dt>Activación</dt><dd class="num">${dr.activacion ? fCorta(dr.activacion) : '—'}</dd>
           <dt>Garantía</dt><dd>${chip(g.t, g.c)}</dd><dt>Bombas</dt><dd>${chip(gb.t.replace('Garantía ', ''), gb.c)}</dd>
           <dt>Baterías</dt><dd>${ck.baterias.length || o.bateriasN || 0}</dd>
           <dt>Fecha de entrega</dt><dd>${o.fEntregaComp ? `<b class="num">${fCorta(o.fEntregaComp)}</b> ` : '<span class="sutil">Sin fecha</span> '}${!o.anulado && o.estado !== 'entregado' && typeof fijarEntrega === 'function' && (esJefe() || mia) ? `<button class="link" onclick="fijarEntrega('${o.id}')">${o.fEntregaComp ? 'Cambiar' : 'Fijar'}</button>` : ''}</dd></dl>
-          ${o.dron ? `<button class="link mt-s" onclick="abrirDron('${o.dron}')">Ver la ficha del dron ${ico('der')}</button>` : ''}</div>
+          ${o.dron ? `<button class="link mt-s" onclick="abrirDron('${o.dron}')">Ver la ficha del dron ${ico('der')}</button>` : ''}</div>`}
         <div class="tarjeta"><h4 class="lado-t">Recepción</h4>
           <div class="sint">${ico('alerta', 'chico')}<span>${esc(o.sintoma)}</span></div>
-          ${resumenRecepcion(o, ck)}
+          ${o.tipo ? resumenIngreso(o) : resumenRecepcion(o, ck)}
           <div class="fotos mt-s">${fotosOrden(o).slice(0, 6).map(f => fotoM(f.foto, f.t, carpetaOrden(o))).join('')}</div>
           <button class="link mt-s" onclick="verDrive('${carpetaOrden(o)}')">${ico('nube', 'chico')} Ver las fotos en Drive</button>
           <button class="link mt-s" onclick="comprobanteRecepcion('${o.id}')">${ico('imprimir', 'chico')} Comprobante de recepción</button></div>
@@ -7292,7 +7632,7 @@ function elegirOrdenPara(accion){
   if (!l.length){ error(accion === 'devolver' ? 'No tenés repuestos para devolver en tus drones' : 'No tenés drones a cargo en el taller'); return; }
   if (l.length === 1) return fn(l[0].id);
   abrirModal({ titulo:{ devolver:'¿De qué dron devolvés?', horas:'¿En qué dron trabajaste?' }[accion] || '¿Para qué dron pedís?', sub:'Tus drones en el taller',
-    cuerpo:`<div class="lista-ord">${l.map(o => `<button class="lo-fila" onclick="${nomFn}('${o.id}')"><div class="lo-foto">${fotoDron(o.modelo, Number(o.num.slice(-3)))}</div>
+    cuerpo:`<div class="lista-ord">${l.map(o => `<button class="lo-fila" onclick="${nomFn}('${o.id}')"><div class="lo-foto">${fotoOrden(o)}</div>
       <div class="lo-txt"><b>${o.num} · ${modeloTxt(o.modelo)}</b><small>${esc(nomCli(o.cli))}${accion === 'horas' ? ' · ' + horas(totalHoras(o)) + ' cargadas' : ''}</small></div><div class="lo-der">${chipOrden(o)}</div></button>`).join('')}</div>` });
 }
 // La pieza que salió sirve como usada: entra al stock de usados con la letra U
@@ -7561,7 +7901,7 @@ function cabGrupo(k){
   if (t === 'o'){
     const o = orden(id);
     if (!o) return `<span class="ap-tipo">${ico('llave')}</span><div><b>Una orden que ya no está</b><small>Al resolver estos pedidos se cierran sin tocar el stock</small></div>`;
-    return `<div class="apg-foto">${fotoDron(o.modelo, Number(o.num.slice(-3)))}</div><div><b>${o.num} · ${modeloTxt(o.modelo)}</b><small>${esc(nomCli(o.cli))} · responsable ${esc(nomUsuario(o.tec))} · ${o.anulado ? 'Anulada' : (ESTADOS_ORDEN[o.estado] || {}).t || ''}</small></div>`;
+    return `<div class="apg-foto">${fotoOrden(o)}</div><div><b>${o.num} · ${modeloTxt(o.modelo)}</b><small>${esc(nomCli(o.cli))} · responsable ${esc(nomUsuario(o.tec))} · ${o.anulado ? 'Anulada' : (ESTADOS_ORDEN[o.estado] || {}).t || ''}</small></div>`;
   }
   if (t === 'b'){
     const b = D().baterias.find(x => x.id === id);
@@ -10146,14 +10486,17 @@ const CONFIG_GRUPOS = [
     { k:'letraUsado', t:'Letra de los usados', d:'Ej.: T50P044-U', tipo:'txt' },
     { k:'etiqueta.tam', t:'Tamaño de etiqueta', d:'Los repuestos llevan código de barras (el QR queda para drones y baterías). Se ajusta cuando compren la impresora', tipo:'sel', ops:['58 × 32 mm', '50 × 25 mm', '40 × 30 mm', '100 × 50 mm'] },
     { k:'_categorias', t:'Categorías y proveedores', d:'Se agregan, cambian y ordenan desde Stock', tipo:'ir', fn:'irCategoriasStock()', boton:'Abrir en Stock', icoB:'caja' }] },
-  { id:'recepcion', t:'Recepción y reparaciones', ico:'recepcion', d:'Modelos de dron, generadores, frases rápidas, fotos obligatorias, atrasos y garantías', ops:[
+  { id:'recepcion', t:'Recepción y reparaciones', ico:'recepcion', d:'Modelos de dron y de control, generadores, frases rápidas, errores, fotos obligatorias, atrasos y garantías', ops:[
     { k:'modelos', t:'Modelos de dron y sus motores', d:'Aparecen en la recepción; la cantidad de motores arma el checklist de motores. Tocá un modelo para cambiarle el nombre o los motores.', tipo:'modelos' },
     { k:'generadores', t:'Generadores y cargadores de campo', d:'Los tipos que aparecen en el paso «Generador» de la recepción. «Otro» aparece siempre al final.', tipo:'lista', def:GENERADORES_FABRICA },
     { k:'fotosOblig', t:'Fotos obligatorias', d:'No se puede confirmar la recepción sin las fotos de cada paso', tipo:'tgl', delicado:true },
     { k:'diasAtraso', t:'Orden atrasada', d:'Más de estos días en el taller', tipo:'num', suf:'días' },
     { k:'garantiaDronMeses', t:'Garantía del dron', d:'Desde la activación', tipo:'num', suf:'meses' }, { k:'garantiaBombasMeses', t:'Garantía de las bombas', d:'Desde la activación', tipo:'num', suf:'meses' },
     { k:'garantiaRepuestoDias', t:'Garantía de repuestos colocados', d:'Si el producto no tiene otro plazo', tipo:'num', suf:'días' },
-    { k:'frases', t:'Frases rápidas de síntomas', d:'Las que aparecen como botones en la recepción', tipo:'lista', def:FRASES_SINTOMA }] },
+    { k:'frases', t:'Frases rápidas de síntomas', d:'Las que aparecen como botones en la recepción del dron. Los técnicos también pueden agregar desde la recepción.', tipo:'lista', def:FRASES_SINTOMA },
+    { k:'controles', t:'Modelos de control remoto', d:'Los que aparecen en «Recibir › Solo control remoto». «Otro» aparece siempre al final.', tipo:'lista', def:CONTROLES_FABRICA },
+    { k:'erroresGenerador', t:'Errores de generadores', d:'Botones rápidos del ingreso de generador. Los técnicos pueden agregar desde el ingreso.', tipo:'lista', def:ERRORES_GENERADOR },
+    { k:'erroresControl', t:'Errores de controles remotos', d:'Botones rápidos del ingreso de control remoto. Los técnicos pueden agregar desde el ingreso.', tipo:'lista', def:ERRORES_CONTROL }] },
   { id:'baterias', t:'Baterías', ico:'bateria', d:'Etiquetas de diagnóstico, dispositivos, precios y lo que ve Esteban', ops:[
     { k:'diagBateria', t:'Etiquetas de diagnóstico', d:'Se tocan una o varias en cada batería', tipo:'lista', def:DIAG_BATERIA },
     { k:'dispBateria', t:'Dispositivos', d:'Lo que entra al centro de baterías', tipo:'lista', def:DISP_BATERIA },
