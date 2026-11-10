@@ -1951,6 +1951,53 @@ body.cel .rec-tipos button .ico{width:26px;height:26px}
 .ing-fotos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 18px}
 body.cel .ing-fotos{grid-template-columns:1fr}
 
+
+/* ===== css/12e-pasos.css ===== */
+/* =====================================================================
+   LO QUE SIGUE EN CADA EQUIPO (15b-pasos.js): barra de avance + botón grande
+   ===================================================================== */
+.sig-paso{border:1.5px solid var(--borde-2);border-radius:var(--r-l);background:var(--carta);padding:16px;margin:16px 0;box-shadow:var(--s1)}
+.pasos-ord{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;position:relative;margin-bottom:14px}
+.pasos-ord span{display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;position:relative;color:var(--texto-3);font-size:12px;line-height:1.2}
+.pasos-ord span::before{content:'';position:absolute;top:13px;left:calc(-50% + 16px);right:calc(50% + 16px);height:3px;border-radius:3px;background:var(--borde-2)}
+.pasos-ord span:first-child::before{display:none}
+.pasos-ord span.hecho::before,.pasos-ord span.on::before{background:var(--verde)}
+.pasos-ord i{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-weight:700;font-size:13px;
+  background:var(--fondo);border:2px solid var(--borde);color:var(--texto-3);position:relative;z-index:1}
+.pasos-ord i .ico{width:15px;height:15px}
+.pasos-ord .hecho i{background:var(--verde);border-color:var(--verde);color:#fff}
+.pasos-ord .on i{background:var(--azul);border-color:var(--azul);color:#fff;box-shadow:0 0 0 4px var(--tinte)}
+.pasos-ord .on b{color:var(--azul)}
+.pasos-ord .hecho b{color:var(--texto-2)}
+.pasos-ord b{font-weight:600}
+.sp-cuerpo{border-top:1px solid var(--borde-2);padding-top:12px}
+.sp-t{display:block;text-transform:uppercase;letter-spacing:.06em;font-size:11px;font-weight:700;color:var(--texto-3);margin-bottom:4px}
+.sp-cuerpo p{margin:0 0 12px;line-height:1.45}
+.sp-pend{display:inline-flex;align-items:center;gap:5px;margin-left:4px;color:var(--ambar-t);font-weight:600}
+.sp-bot{display:flex;flex-wrap:wrap;gap:10px}
+.sp-bot .btn{flex:1 1 auto}
+.sp-extra{margin-top:10px}
+.sp-link{display:inline-flex;align-items:center;gap:6px;font-size:14px}
+/* Etapa 0 y 2: el botón principal se destaca un poco más */
+.etapa-0 .sp-bot .btn-prim,.etapa-2 .sp-bot .btn-verde{flex-basis:100%}
+/* «El cliente no aprobó»: dos opciones grandes */
+.sp-opciones{display:grid;gap:10px}
+.sp-op{display:flex;align-items:center;gap:14px;text-align:left;padding:14px 16px;border:1.5px solid var(--borde);border-radius:var(--r-l);background:var(--carta)}
+.sp-op:active{background:var(--tinte)}
+.sp-op .ico{width:26px;height:26px;color:var(--azul);flex:none}
+.sp-op span{display:flex;flex-direction:column;gap:3px}
+.sp-op small{color:var(--texto-3);font-size:13px;line-height:1.35}
+.sp-op:disabled{opacity:.45}
+/* Tarjeta de «Mis equipos»: qué le toca ahora */
+.md-sig{display:inline-flex;align-items:center;gap:4px;font-style:normal;font-size:13px;font-weight:600;color:var(--azul);margin-top:2px}
+.md-sig .ico{width:14px;height:14px}
+body.cel .sig-paso{padding:14px 12px;margin:14px 0}
+body.cel .pasos-ord span{font-size:10.5px}
+body.cel .sp-bot .btn{flex-basis:100%}
+.modal-cuerpo > .sig-paso:first-child{margin-top:0}
+/* Celulares angostos (≤ 360 px): solo se lee el nombre del paso en el que está; los otros quedan como números */
+@media (max-width:360px){ .pasos-ord span:not(.on) b{visibility:hidden} .pasos-ord span.on b{white-space:nowrap} .pasos-ord span:first-child.on b{text-align:left} }
+
 </style>
 </head>
 <body>
@@ -2225,7 +2272,7 @@ const SECCIONES = [
 const ESTADOS_ORDEN = {
   recibido:    { t:'Recibido',                      c:'gris',     corto:'Recibidos' },
   diagnostico: { t:'En diagnóstico',                c:'cielo',    corto:'En diagnóstico' },
-  presupuesto: { t:'Presupuesto pendiente',         c:'ambar',    corto:'Presupuesto pendiente' },
+  presupuesto: { t:'Esperando respuesta del cliente', c:'ambar',  corto:'Esperando al cliente' },   // el presupuesto ya se le mandó (10/11/2026)
   esperando:   { t:'Esperando repuestos',           c:'ambar',    corto:'Esperando repuestos' },
   reparacion:  { t:'En reparación',                 c:'azul',     corto:'En reparación' },
   garantia:    { t:'En proceso de garantía',        c:'violeta',  corto:'En garantía' },
@@ -4878,7 +4925,7 @@ function armarNav(){
   const visibles = SECCIONES.filter(s => puedeVer(s.id));
   const grupos = [['panel', 'recepcion', 'reparaciones', 'presupuestos', 'baterias'], ['stock', 'ventas', 'aprobaciones', 'pedidos', 'facturacion'], ['clientes', 'equipo', 'miespacio'], ['actividad', 'config', 'consulta']];
   $('#lat-nav').innerHTML = grupos.map(g => visibles.filter(s => g.includes(s.id)).map(s => {
-    const n = contadorSeccion(s.id), t = s.id === 'reparaciones' && esTecnico() ? 'Mis reparaciones' : s.t;
+    const n = contadorSeccion(s.id), t = s.id === 'reparaciones' && esTecnico() ? 'Mis equipos' : s.t;
     return `<button class="nav-it ${s.id === SECCION ? 'on' : ''}" data-sec="${s.id}" onclick="ir('${s.id}')">${ico(s.ico)}<span>${t}</span>${n ? `<b class="contador ${s.id === 'aprobaciones' ? '' : 'gris'}">${n}</b>` : ''}</button>`;
   }).join('')).filter(Boolean).join('<hr>');
   $('#lat-usuario').innerHTML = `${avatar(u.nombre)}<span><b>${esc(u.nombre)}</b><small>${esc(u.cargo)}</small></span><button class="icon-btn" onclick="bloquear()" title="Bloquear (cerrar sesión)" aria-label="Bloquear">${ico('candado')}</button>`;
@@ -4902,7 +4949,7 @@ function armarNav(){
 function armarBarraCel(){
   const t = tipo();
   let items;
-  if (t === 'tecnico') items = [['panel', 'inicio', 'Inicio'], ['reparaciones', 'dron', 'Mis drones'], ['escanear'], ['recepcion', 'recepcion', 'Recibir'], ['mas', 'menu', 'Más']];
+  if (t === 'tecnico') items = [['panel', 'inicio', 'Inicio'], ['reparaciones', 'dron', 'Mis equipos'], ['escanear'], ['recepcion', 'recepcion', 'Recibir'], ['mas', 'menu', 'Más']];
   else if (t === 'externo') items = [['baterias', 'bateria', 'Baterías'], ['escanear'], ['mas', 'menu', 'Más']];
   else if (t === 'consulta') items = [['consulta', 'etiqueta', 'Consulta'], ['escanear']];
   else items = [['panel', 'panel', 'Panel'], ['reparaciones', 'llave', 'Taller'], ['escanear'], ['aprobaciones', 'aprobar', 'Aprobar'], ['mas', 'menu', 'Más']];
@@ -5453,7 +5500,7 @@ function recibirDronCon(chasis){ const r = REC(); r.chasis = chasis; r.paso = 0;
 // «Agregar a mi orden» desde el escáner: se elige el dron y el repuesto queda en el pedido
 function agregarAMiOrden(cod){
   const l = ordenesActivas().filter(o => o.tec === USUARIO && enTaller(o));
-  if (!l.length){ error('No tenés drones a cargo en el taller'); return; }
+  if (!l.length){ error('No tenés equipos a cargo en el taller'); return; }
   if (l.length === 1){ pedirRepuestos(l[0].id); pedirAgregar(cod); return; }
   abrirModal({ titulo:'¿Para qué dron es?', sub:esc((producto(cod) || {}).nombre || cod),
     cuerpo:`<div class="lista-ord">${l.map(o => `<button class="lo-fila" onclick="pedirRepuestos('${o.id}');pedirAgregar('${esc(cod)}')"><div class="lo-foto">${fotoOrden(o)}</div>
@@ -5479,19 +5526,21 @@ function mostrarProductoEscaneado(cod){ abrirEscaner(); setTimeout(() => leerCod
 /* ---------- Vista rápida de una orden (la ficha completa está en Reparaciones) ---------- */
 function fichaOrden(id){
   const o = orden(id); if (!o) return;
-  const e = ESTADOS_ORDEN[o.estado], dr = dron(o.dron);
+  const e = ESTADOS_ORDEN[o.estado], dr = dron(o.dron), eq = !!o.tipo;
+  // Generador o control: sus propios datos (antes mostraba «Chasis», «Horas de vuelo» y «Compra» como si fuera un dron)
+  const datos = eq ? datosEquipoHTML(o)
+    :`<dt>Chasis</dt><dd class="num">${esc(o.chasis)}</dd><dt>Horas de vuelo</dt><dd class="num">${num(o.horasVuelo)} h</dd><dt>Compra</dt><dd>${dr ? dr.compra : '—'}</dd>`;
   abrirModal({ titulo:`${o.num} · ${modeloTxt(o.modelo)}`, sub:`${esc(nomCli(o.cli))} · ingresó ${cuando(o.f)} (${fCorta(o.f)} ${o.h})`, ancho:'ancho',
-    cuerpo:`<div class="fo-grid">
+    cuerpo:`${siguientePaso(o)}<div class="fo-grid">
       <div class="fo-foto">${fotoOrden(o)}</div>
       <div class="fo-datos">
         <div class="fo-fila">${chip(e.t, e.c)}${atrasada(o) ? chip(diasEnTaller(o) + ' días en el taller', 'rojo', 'reloj') : ''}${o.garantia && o.garantia.est === 'tramite' ? chip('En proceso de garantía', 'violeta', 'garantia') : ''}</div>
-        <dl class="fo-dl"><dt>Chasis</dt><dd class="num">${o.chasis}</dd><dt>Responsable</dt><dd>${avatar(nomUsuario(o.tec), 'chico')} ${esc(nomUsuario(o.tec))}</dd>
-          <dt>Síntoma</dt><dd>${esc(o.sintoma)}</dd><dt>Horas de vuelo</dt><dd class="num">${num(o.horasVuelo)} h</dd>
-          <dt>Compra</dt><dd>${dr ? dr.compra : '—'}</dd><dt>Mano de obra</dt><dd class="num">${horas(totalHoras(o))} · ${usd(totalHoras(o) * D().config.tarifaHora)}</dd></dl>
+        <dl class="fo-dl">${datos}<dt>Responsable</dt><dd>${avatar(nomUsuario(o.tec), 'chico')} ${esc(nomUsuario(o.tec))}</dd>
+          <dt>${eq ? 'Errores' : 'Síntoma'}</dt><dd>${esc(o.sintoma)}</dd><dt>Mano de obra</dt><dd class="num">${horas(totalHoras(o))} · ${usd(totalHoras(o) * D().config.tarifaHora)}</dd></dl>
       </div></div>
       <h4 class="fo-t">Historial</h4>
       <ol class="fo-hist">${o.hist.slice().reverse().map(x => `<li><b>${esc(x.a)}</b><small>${esc(nomUsuario(x.u))} · ${fCorta(x.f)} ${x.h}</small></li>`).join('')}</ol>`,
-    pie:`<button class="btn btn-linea" onclick="cerrarModal()">Cerrar</button><button class="btn btn-prim" onclick="abrirOrden('${o.id}')">${ico('llave')} Abrir la orden</button>` });
+    pie:`<button class="btn btn-linea" onclick="cerrarModal()">Cerrar</button><button class="btn btn-linea" onclick="abrirOrden('${o.id}')">${ico('llave')} Ver la orden completa</button>` });
 }
 
 
@@ -6019,18 +6068,18 @@ function panelTecnico(v){
   const B = (i, txt, fn, cls) => `<button class="gran-btn ${cls || ''}" onclick="${fn}">${ico(i)}<span>${txt}</span></button>`;
   v.innerHTML = `
     <div class="enc tec"><div><div class="enc-pre">${fLarga(hoy())}</div><h1>${saludoHora()}, ${esc(u.nombre)}</h1>
-      <p class="enc-sub">Tenés <b>${mios.length} dron${mios.length === 1 ? '' : 'es'} a tu cargo</b>${hsHoy ? ` · llevás ${horas(hsHoy)} hoy` : ''}</p></div></div>
+      <p class="enc-sub">Tenés <b>${mios.length} equipo${mios.length === 1 ? '' : 's'} a tu cargo</b>${hsHoy ? ` · llevás ${horas(hsHoy)} hoy` : ''}</p></div></div>
     ${ot ? `<button class="aviso-linea verde-l" onclick="ORD_TAB='horas';abrirOrden('${ot.id}')">${ico('reloj')}<span><b>El reloj está corriendo en la ${ot.num}</b> · desde las ${t.h}</span>${ico('der', 'chico')}</button>` : ''}
     <div class="gran-grid">
-      ${verRec ? B('recepcion', 'Recibir', "ir('recepcion')", 'prim') : ''}${verRep ? B('llave', 'Mis drones', "ir('reparaciones')") : ''}${B('escanear', 'Escanear', 'abrirEscaner()', 'verde')}
+      ${verRec ? B('recepcion', 'Recibir', "ir('recepcion')", 'prim') : ''}${verRep ? B('llave', 'Mis equipos', "ir('reparaciones')") : ''}${B('escanear', 'Escanear', 'abrirEscaner()', 'verde')}
       ${verRep ? B('caja', 'Pedir repuesto', "elegirOrdenPara('pedir')") + B('volver', 'Devolver repuesto', "elegirOrdenPara('devolver')") + B('reloj', 'Cargar horas', "elegirOrdenPara('horas')") : ''}${puedeVer('ventas') ? B('carrito', 'Vender', "ir('ventas')") : ''}${B('aprobar', 'Mis pedidos', "document.getElementById('mis-pedidos').scrollIntoView({behavior:'smooth'})")}
     </div>
     <section class="tarjeta mt">
-      <div class="tarjeta-cab"><span class="tarjeta-ico">${ico('dron')}</span><div><h3>Mis drones</h3><div class="sub">Los que recibiste o te asignaron</div></div></div>
+      <div class="tarjeta-cab"><span class="tarjeta-ico">${ico('dron')}</span><div><h3>Mis equipos</h3><div class="sub">Los que recibiste o te asignaron</div></div></div>
       ${mios.length ? `<div class="mis-drones">${mios.map((o, i) => `<button class="md-card" style="--i:${i}" onclick="fichaOrden('${o.id}')">
         <div class="md-foto">${fotoOrden(o)}</div>
-        <div class="md-txt"><b>${modeloTxt(o.modelo)}</b><span>${esc(nomCli(o.cli))}</span>${chipOrden(o)}<small class="num">${o.num} · ${diasEnTaller(o) ? 'hace ' + diasEnTaller(o) + ' días' : 'hoy ' + o.h}</small></div></button>`).join('')}</div>`
-        : vacio('No tenés drones a cargo', 'Cuando recibas un dron, aparece acá.', `<button class="btn btn-prim" onclick="ir('recepcion')">${ico('dron')} Recibir un dron</button>`)}
+        <div class="md-txt"><b>${modeloTxt(o.modelo)}</b><span>${esc(nomCli(o.cli))}</span>${chipOrden(o)}${sigCorto(o) ? `<em class="md-sig">${ico('der', 'chico')}${sigCorto(o)}</em>` : ''}<small class="num">${o.num} · ${diasEnTaller(o) ? 'hace ' + diasEnTaller(o) + ' días' : 'hoy ' + o.h}</small></div></button>`).join('')}</div>`
+        : vacio('No tenés equipos a cargo', 'Cuando recibas un dron, un generador o un control, aparece acá.', `<button class="btn btn-prim" onclick="ir('recepcion')">${ico('recepcion')} Recibir</button>`)}
     </section>
     <section class="tarjeta mt" id="mis-pedidos">
       <div class="tarjeta-cab"><span class="tarjeta-ico ambar">${ico('caja')}</span><div><h3>Mis pedidos</h3><div class="sub">Repuestos, ventas, presupuestos y pases · los pendientes y los de la última semana</div></div></div>
@@ -7284,7 +7333,7 @@ function ordenesVisibles(conAnuladas){
 function pintarTaller(v){
   const todas = ordenesVisibles(), act = todas.filter(o => o.estado !== 'entregado');
   const gar = D().ordenes.filter(o => !o.anulado && o.garantia && (o.garantia.est === 'tramite' || o.estado === 'garantia') && (!esTecnico() || o.tec === USUARIO));
-  v.innerHTML = `${enc(esTecnico() ? 'Mis reparaciones' : 'Reparaciones', `<b>${act.length}</b> órdenes abiertas${act.filter(atrasada).length ? ` · <b class="txt-rojo">${act.filter(atrasada).length} atrasadas</b>` : ''}`,
+  v.innerHTML = `${enc(esTecnico() ? 'Mis equipos' : 'Reparaciones', `<b>${act.length}</b> órdenes abiertas${act.filter(atrasada).length ? ` · <b class="txt-rojo">${act.filter(atrasada).length} atrasadas</b>` : ''}`,
       `<button class="btn btn-prim" onclick="ir('recepcion')">${ico('recepcion')} Recibir</button>`)}
     ${pestanas([['tablero', 'Tablero'], ['lista', 'Lista', todas.length], ['garantias', 'Garantías', gar.length]], TALLER.vista, 'tallerVista')}
     ${TALLER.vista !== 'garantias' ? `<div class="barra-filtros">${buscadorLocal('t-q', TALLER.q, 'Buscar orden, chasis, cliente o síntoma…', 'tallerBuscar')}
@@ -7410,7 +7459,7 @@ function pintarOrden(v, id){
   const pend = D().aprobaciones.filter(a => a.est === 'pendiente' && a.orden === o.id);
   const ck = checkRec(o);
   const garAbierta = o.garantia && o.garantia.est === 'tramite';
-  v.innerHTML = `<button class="volver-link" onclick="SUB={};ir('reparaciones')">${ico('izq')} ${esTecnico() ? 'Mis reparaciones' : 'Reparaciones'}</button>
+  v.innerHTML = `<button class="volver-link" onclick="SUB={};ir('reparaciones')">${ico('izq')} ${esTecnico() ? 'Mis equipos' : 'Reparaciones'}</button>
     <div class="ord-cab">
       <div class="oc-foto">${fotoOrden(o)}</div>
       <div class="oc-txt"><div class="oc-pre num">${o.num} · ingresó ${cuando(o.f)} (${fCorta(o.f)} ${o.h})</div>
@@ -7419,6 +7468,7 @@ function pintarOrden(v, id){
         <div class="oc-chips">${o.anulado ? chip('Anulada: ' + o.anulado.motivo, 'gris', 'anular') : chipOrden(o)}${atrasada(o) && !o.anulado ? chip(diasEnTaller(o) + ' días en el taller', 'rojo', 'reloj') : ''}${garAbierta ? chip('En proceso de garantía', 'violeta', 'garantia') : ''}</div></div>
       <div class="oc-resp">${avatar(nomUsuario(o.tec), 'grande')}<span><small>Responsable</small><b>${esc(nomUsuario(o.tec))}</b>${o.recibio !== o.tec ? `<small>Lo recibió ${esc(nomUsuario(o.recibio))}</small>` : ''}</span></div>
     </div>
+    ${siguientePaso(o, true)}
     ${o.anulado ? `<div class="aviso-linea rojo">${ico('anular')}<span><b>Orden anulada</b> por ${esc(nomUsuario(o.anulado.u))} el ${fCorta(o.anulado.f)} · ${esc(o.anulado.motivo)}</span></div>` : ''}
     ${!puede && esTecnico() ? `<div class="aviso-linea ambar">${ico('candado')}<span>Esta orden es de ${esc(nomUsuario(o.tec))}: solo el técnico responsable trabaja en ella.</span></div>` : ''}
     ${o.estado !== 'entregado' && !o.anulado && puede ? `<div class="ord-acc">
@@ -7660,7 +7710,7 @@ function devolverOK(id){
 function elegirOrdenPara(accion){
   const fn = { pedir:pedirRepuestos, devolver:devolverRepuestos, horas:cargarHorasModal }[accion] || pedirRepuestos, nomFn = { pedir:'pedirRepuestos', devolver:'devolverRepuestos', horas:'cargarHorasModal' }[accion] || 'pedirRepuestos';
   const l = ordenesActivas().filter(o => o.tec === USUARIO && enTaller(o) && (accion !== 'devolver' || paraDevolver(o).length));
-  if (!l.length){ error(accion === 'devolver' ? 'No tenés repuestos para devolver en tus drones' : 'No tenés drones a cargo en el taller'); return; }
+  if (!l.length){ error(accion === 'devolver' ? 'No tenés repuestos para devolver en tus equipos' : 'No tenés equipos a cargo en el taller'); return; }
   if (l.length === 1) return fn(l[0].id);
   abrirModal({ titulo:{ devolver:'¿De qué dron devolvés?', horas:'¿En qué dron trabajaste?' }[accion] || '¿Para qué dron pedís?', sub:'Tus drones en el taller',
     cuerpo:`<div class="lista-ord">${l.map(o => `<button class="lo-fila" onclick="${nomFn}('${o.id}')"><div class="lo-foto">${fotoOrden(o)}</div>
@@ -7901,6 +7951,130 @@ async function valeRetiro(aid){
   pdfFirmas(doc, 'Retira: ' + nomUsuario(a.u), 'Aprueba: ' + nomUsuario(a.resolvio));
   pdfPie(doc, 'Vale ' + ref);
   docListo(doc, `Vale de retiro ${ref} - ${fArchivo(hoy())}.pdf`, { ref, sec:'stock' });
+}
+
+
+/* ===== js/15b-pasos.js ===== */
+/* =====================================================================
+   LO QUE SIGUE EN CADA EQUIPO  · 10/11/2026 (pedido de la usuaria)
+   Después de recibir, el técnico no sabía dónde seguir. Ahora cada equipo muestra:
+   - una barra de avance: Recibido → Presupuesto → Enviado → Reparación → Terminado
+   - un solo botón grande con lo que sigue (armar presupuesto, enviarlo, «el cliente aprobó»,
+     pedir repuestos / terminar), en la ventanita de «Mis equipos» y en la ficha de la orden.
+   Al tocar «El cliente aprobó», la orden pasa a reparación y los repuestos del presupuesto
+   se piden solos al stock (presuRespuesta en 20-presupuestos.js).
+   ===================================================================== */
+const ETAPAS_ORDEN = ['Recibido', 'Presupuesto', 'Enviado', 'Reparación', 'Terminado'];
+
+// El presupuesto vigente de la orden (el último que no está anulado ni reemplazado)
+function presuDeOrden(o){
+  return D().presupuestos.filter(p => p.orden === o.id && !p.anulado && p.est !== 'reemplazado')
+    .sort((a, b) => ((b.f || '') + (b.h || '') + String(b.version || 1).padStart(3, '0')).localeCompare((a.f || '') + (a.h || '') + String(a.version || 1).padStart(3, '0')))[0] || null;
+}
+// En qué etapa está: 0 Recibido · 1 Presupuesto (armándolo) · 2 Enviado (esperando al cliente) · 3 Reparación · 4 Terminado
+function etapaOrden(o){
+  if (['terminado', 'facturado', 'entregado'].includes(o.estado)) return 4;
+  if (['reparacion', 'esperando', 'garantia'].includes(o.estado)) return 3;
+  const p = presuDeOrden(o);
+  if (p && p.est === 'enviado') return 2;
+  if (p && ['borrador', 'aprobar', 'aprobado', 'rechazado'].includes(p.est)) return 1;
+  if (o.estado === 'presupuesto') return 2;
+  return 0;
+}
+function barraPasos(o){
+  const k = etapaOrden(o);
+  return `<div class="pasos-ord" aria-label="Avance: ${ETAPAS_ORDEN[k]}">${ETAPAS_ORDEN.map((t, i) => `<span class="${i < k ? 'hecho' : i === k ? 'on' : ''}"><i>${i < k ? ico('check', 'chico') : i + 1}</i><b>${t}</b></span>`).join('')}</div>`;
+}
+// Texto corto para la tarjeta de «Mis equipos»: qué le toca ahora
+function sigCorto(o){
+  const k = etapaOrden(o), p = presuDeOrden(o);
+  if (k === 0) return 'Armar el presupuesto';
+  if (k === 1) return !p ? 'Armar el presupuesto' : p.est === 'borrador' ? 'Terminar el presupuesto' : p.est === 'aprobar' ? 'Esperando el visto bueno' : p.est === 'aprobado' ? 'Enviarlo al cliente' : 'El cliente no aprobó';
+  if (k === 2) return 'Esperando respuesta del cliente';
+  if (k === 3) return o.estado === 'esperando' ? 'Esperando repuestos' : o.estado === 'garantia' ? 'En garantía' : 'Reparar · pedir repuestos';
+  return '';
+}
+const puedeTrabajar = o => o && !o.anulado && (esJefe() || o.tec === USUARIO);
+
+/* El bloque «Lo que sigue». compacto: en la ficha de la orden, donde los botones de reparación ya están arriba */
+function siguientePaso(o, compacto){
+  if (!o || o.anulado) return '';
+  const k = etapaOrden(o), p = presuDeOrden(o), puede = puedeTrabajar(o), id = o.id;
+  const B = (cls, i, t, f) => `<button class="btn ${cls} btn-xl" onclick="${f}">${ico(i)} ${t}</button>`;
+  const L = (t, f) => `<button class="link sp-link" onclick="${f}">${t}</button>`;
+  let txt = '', bot = '', extra = '';
+  if (k === 0){
+    txt = 'Revisá el equipo y armá el presupuesto para el cliente.';
+    bot = B('btn-prim', 'presupuesto', 'Armar presupuesto', `pasoPresu('${id}')`);
+    extra = L('Reparar sin presupuesto (garantía, mantenimiento o ya acordado)', `repararSinPresu('${id}')`);
+  } else if (k === 1 && p){
+    if (p.est === 'borrador'){ txt = `El presupuesto <b>${p.num}</b> está a medio armar.`; bot = B('btn-prim', 'presupuesto', 'Seguir con el presupuesto', `abrirPresupuesto('${p.id}')`); }
+    else if (p.est === 'aprobar'){ txt = `El presupuesto <b>${p.num}</b> espera el visto bueno de ${esc(quienFalta(aprobPresu(p)))} antes de mandarlo.`; bot = B('btn-linea', 'ojo', 'Ver el presupuesto', `abrirPresupuesto('${p.id}')`); }
+    else if (p.est === 'aprobado'){ txt = `El presupuesto <b>${p.num}</b> (${usd(totalPresu(p))}) ya está aprobado: mandáselo al cliente.`; bot = B('btn-verde', 'whatsapp', 'Enviar al cliente por WhatsApp', `pasoEnviar('${p.id}')`); }
+    else { txt = `<b>El cliente no aprobó</b> el presupuesto ${p.num}.`; bot = B('btn-prim', 'presupuesto', 'Hacer otro presupuesto', `pasoOtroPresu('${p.id}')`) + B('btn-linea', 'volver', 'Devolver sin reparar', `devolverSinReparar('${id}')`); }
+  } else if (k === 2){
+    txt = p ? `Mandaste el presupuesto <b>${p.num}</b> (${usd(totalPresu(p))})${p.fEnvio ? ' el ' + fCorta(p.fEnvio) : ''}. ¿Qué respondió el cliente?` : 'El presupuesto está enviado. ¿Qué respondió el cliente?';
+    bot = B('btn-verde', 'check', 'El cliente aprobó', `pasoAprobo('${id}')`) + B('btn-linea', 'x', 'No aprobó', `pasoNoAprobo('${id}')`);
+    if (p) extra = L(`${ico('whatsapp', 'chico')} Volver a mandarlo por WhatsApp`, `presuPDF('${p.id}', true)`);
+  } else if (k === 3){
+    const pend = D().aprobaciones.filter(a => a.est === 'pendiente' && a.orden === id && a.tipo === 'retiro').reduce((s, a) => s + (a.items || []).length, 0);
+    txt = o.estado === 'esperando' ? 'Esperando repuestos (ya están en el pedido a Dragur). Cuando lleguen, se aprueban y seguís.'
+      : o.estado === 'garantia' ? 'En proceso de garantía con el fabricante.'
+      : 'Pedí lo que necesites del stock, cargá las horas y, cuando termines, tocá <b>Terminar</b>.';
+    if (pend) txt += ` <span class="sp-pend">${ico('reloj', 'chico')} ${pend} repuesto${pend === 1 ? '' : 's'} esperando aprobación</span>`;
+    if (!compacto) bot = B('btn-linea', 'caja', 'Pedir repuestos', `cerrarModal();pedirRepuestos('${id}')`) + B('btn-linea', 'reloj', 'Cargar horas', `cerrarModal();cargarHorasModal('${id}')`) + B('btn-verde', 'check', 'Terminar', `cerrarModal();terminarOrden('${id}')`);
+  } else {
+    txt = o.sinReparar ? 'Se devuelve <b>sin reparar</b> (el cliente no aprobó el presupuesto).' : o.estado === 'terminado' ? '<b>Listo para facturar.</b> Le avisamos a Florencia.' : o.estado === 'facturado' ? '<b>Facturado.</b> Falta que lo retire el cliente.' : `<b>Entregado</b> al cliente${o.fEntrega ? ' el ' + fCorta(o.fEntrega) : ''}.`;
+  }
+  if (!puede){ bot = ''; extra = ''; if (k < 4) txt += ` <span class="sutil">Lo sigue ${esc(nomUsuario(o.tec))}.</span>`; }
+  return `<div class="sig-paso etapa-${k}">${barraPasos(o)}
+    <div class="sp-cuerpo"><small class="sp-t">${k === 4 ? 'Estado' : 'Lo que sigue'}</small><p>${txt}</p>${bot ? `<div class="sp-bot">${bot}</div>` : ''}${extra ? `<div class="sp-extra">${extra}</div>` : ''}</div></div>`;
+}
+
+/* ---------- Acciones ---------- */
+// Después de cada paso: se redibuja lo de atrás y, si la ventanita del equipo estaba abierta, se vuelve a mostrar con el paso nuevo
+function trasPaso(id, ventana){ refrescar(); if (ventana) fichaOrden(id); }
+const ventanaAbierta = () => !!$('#modal:not(.hidden) .sig-paso');
+function pasoPresu(id){ cerrarModal(); nuevoPresupuesto({ orden:id }); }
+function pasoEnviar(pid){ cerrarModal(); presuEnviar(pid, true); }
+function pasoOtroPresu(pid){ cerrarModal(); presuVersion(pid); }
+async function pasoAprobo(id){
+  const o = orden(id), p = presuDeOrden(o), v = ventanaAbierta(); if (!o) return;
+  const reps = p ? p.lineas.filter(l => l.tipo === 'repuesto').length : 0;
+  if (!await confirmar('¿El cliente aprobó?', `La orden pasa a <b>En reparación</b>${reps === 1 ? ' y el repuesto del presupuesto se pide solo al stock' : reps ? ` y los ${reps} repuestos del presupuesto se piden solos al stock` : ''}.`, 'Sí, aprobó')) return;
+  if (p && p.est === 'enviado'){ presuRespuesta(p.id, 'aceptado', true); trasPaso(id, v); return; }
+  // Sin presupuesto cargado en la página (o ya respondido): pasa directo a reparación
+  const antes = o.estado; o.estado = 'reparacion'; o.hist.push({ f:hoy(), h:hora(), u:USUARIO, a:'El cliente aprobó · pasa a reparación' });
+  registrar(`Cambió el estado de la ${o.num}`, o.num, 'reparaciones', { estado:(ESTADOS_ORDEN[antes] || {}).t || antes }, { estado:ESTADOS_ORDEN.reparacion.t }); guardar();
+  avisar('Aprobado · la orden pasa a reparación', 'check', { tilde:true }); trasPaso(id, v);
+}
+function pasoNoAprobo(id){
+  const o = orden(id), p = presuDeOrden(o);
+  abrirModal({ titulo:'El cliente no aprobó', sub:`${o.num} · ${esc(modeloTxt(o.modelo))} de ${esc(nomCli(o.cli))}`,
+    cuerpo:`<p>¿Qué hacemos?</p><div class="sp-opciones">
+      <button class="sp-op" onclick="noAproboOtro('${id}')">${ico('presupuesto')}<span><b>Hacer otro presupuesto</b><small>Se arma una versión nueva; la anterior queda guardada.</small></span></button>
+      <button class="sp-op" onclick="noAproboDevolver('${id}')">${ico('volver')}<span><b>Devolver sin reparar</b><small>La orden queda terminada, con esa nota, para entregarle el equipo.</small></span></button></div>`,
+    pie:`<button class="btn btn-linea" onclick="cerrarModal()">Cancelar</button>` });
+  if (!p) $('.sp-op').disabled = true;
+}
+function noAproboOtro(id){ const p = presuDeOrden(orden(id)); if (!p) return; cerrarModal(); if (p.est === 'enviado') presuRespuesta(p.id, 'rechazado', true); presuVersion(p.id); }
+function noAproboDevolver(id){ const p = presuDeOrden(orden(id)); cerrarModal(); if (p && p.est === 'enviado') presuRespuesta(p.id, 'rechazado', true); devolverSinReparar(id, true); }
+async function devolverSinReparar(id, yaConfirmado){
+  const o = orden(id); if (!o) return;
+  if (!yaConfirmado && !await confirmar('¿Devolver sin reparar?', 'La orden queda terminada con la nota «sin reparar», para entregarle el equipo al cliente. Los pedidos pendientes se cancelan.', 'Devolver sin reparar', true)) return;
+  pendientesOrden(id).forEach(a => cancelarAprob(a, `Se devuelve sin reparar la ${o.num}`));
+  const antes = o.estado; o.estado = 'terminado'; o.fTerm = hoy(); o.sinReparar = true; delete o.esperaPorPedido;
+  o.hist.push({ f:hoy(), h:hora(), u:USUARIO, a:'Se devuelve sin reparar: el cliente no aprobó el presupuesto' });
+  registrar('Se devuelve sin reparar', o.num, 'reparaciones', { estado:(ESTADOS_ORDEN[antes] || {}).t || antes }, { estado:ESTADOS_ORDEN.terminado.t }); guardar(); _cache = {};
+  avisar(`${o.num} · se devuelve sin reparar`, 'volver'); refrescar();
+}
+async function repararSinPresu(id){
+  const o = orden(id), v = ventanaAbierta(); if (!o) return;
+  if (!await confirmar('¿Reparar sin presupuesto?', 'Para garantías, mantenimientos ya acordados o cuando el cliente ya dijo que sí. La orden pasa directo a <b>En reparación</b>.', 'Pasar a reparación')) return;
+  const antes = o.estado; o.estado = 'reparacion';
+  o.hist.push({ f:hoy(), h:hora(), u:USUARIO, a:'Pasó a reparación sin presupuesto' });
+  registrar(`Cambió el estado de la ${o.num}`, o.num, 'reparaciones', { estado:(ESTADOS_ORDEN[antes] || {}).t || antes }, { estado:ESTADOS_ORDEN.reparacion.t }); guardar();
+  avisar('En reparación · ya podés pedir repuestos', 'llave', { tilde:true }); trasPaso(id, v);
 }
 
 
@@ -8703,7 +8877,7 @@ function pintarPresu(v, id){
   const ord = p.orden && orden(p.orden), bat = p.bateria && D().baterias.find(b => b.id === p.bateria);
   const edita = !p.anulado && (p.est === 'borrador' || (p.est === 'aprobar' && esJefe())), iva = factorIva() - 1, tot = totalPresu(p);
   const reglaOn = reglaAprob('presupuesto').on !== false;
-  v.innerHTML = `<button class="volver-link" onclick="SUB={};ir('presupuestos')">${ico('izq')} Presupuestos</button>
+  v.innerHTML = `${ord && esTecnico() ? `<button class="volver-link" onclick="abrirOrden('${ord.id}')">${ico('izq')} Volver a la ${ord.num}</button>` : `<button class="volver-link" onclick="SUB={};ir('presupuestos')">${ico('izq')} Presupuestos</button>`}
     ${enc(`Presupuesto ${p.num}${p.version > 1 ? ' · versión ' + p.version : ''}`, `${ord ? `Para la <b>${ord.num}</b> · ${modeloTxt(ord.modelo)} · ` : bat ? `Para la batería <b>${bat.num}</b> · ` : p.bateria ? 'Para una batería · ' : 'Suelto · '}armó ${esc(nomUsuario(p.u))} el ${fCorta(p.f)}`, chipPresu(p))}
     ${circuitoPresu(p, reglaOn)}
     ${p.anulado ? `<div class="aviso-linea rojo">${ico('anular')}<span><b>Anulado</b> por ${esc(nomUsuario(p.anulado.u))} el ${fCorta(p.anulado.f)} · ${esc(p.anulado.motivo)}</span></div>` : ''}
@@ -8772,40 +8946,42 @@ function presuPedirAprob(id){
   const a = { id:nuevoIdAprob(), tipo:'presupuesto', u:USUARIO, f:hoy(), h:hora(), est:'pendiente', vistoBueno:[], presupuesto:p.id, orden:p.orden };
   if (p.bateria) a.bateria = p.bateria;
   D().aprobaciones.push(a);
-  if (p.orden){ const o = orden(p.orden); if (o){ if (enTaller(o) && !['garantia', 'presupuesto'].includes(o.estado)){ const antes = o.estado; o.estado = 'presupuesto'; registrar(`Cambió el estado de la ${o.num}`, o.num, 'reparaciones', { estado:ESTADOS_ORDEN[antes].t }, { estado:ESTADOS_ORDEN.presupuesto.t }); } o.hist.push({ f:hoy(), h:hora(), u:USUARIO, a:`Armó el presupuesto ${p.num} (${usd(totalPresu(p))}) y pidió aprobación` }); } }
+  // La orden no cambia de estado acá: pasa a «Esperando respuesta del cliente» recién cuando se le manda (presuEnviar)
+  if (p.orden){ const o = orden(p.orden); if (o) o.hist.push({ f:hoy(), h:hora(), u:USUARIO, a:`Armó el presupuesto ${p.num} (${usd(totalPresu(p))}) y pidió aprobación` }); }
   registrar('Pidió aprobación del presupuesto', p.num, 'presupuestos'); guardar(); _cache = {};
   if (puedeAprobar(a)){ aprobar(a.id); return; }
   armarNav(); ir('presupuestos', true, true); avisar(`Presupuesto enviado para aprobar · le llega a ${esc(quienAprueba('presupuesto'))}`, 'enviar', { tilde:true });
 }
-async function presuEnviar(id){
+// quedarse: desde «Lo que sigue» (15b-pasos.js) no se cambia de sección
+async function presuEnviar(id, quedarse){
   const p = D().presupuestos.find(x => x.id === id); if (!p || p.anulado) return; if (!p.cli){ error('Elegí el cliente'); return; }
   if (!p.lineas.length){ error('Agregá al menos una línea'); return; }
   // Sin aprobación (lo predeterminado desde el 10/11/2026): el técnico lo manda directo desde el borrador
   const directo = p.est === 'borrador';
   if (p.orden){ const o = orden(p.orden); if (o){
-    if (directo && enTaller(o) && !['garantia', 'presupuesto'].includes(o.estado)){ const antes = o.estado; o.estado = 'presupuesto'; registrar(`Cambió el estado de la ${o.num}`, o.num, 'reparaciones', { estado:ESTADOS_ORDEN[antes].t }, { estado:ESTADOS_ORDEN.presupuesto.t }); }
+    if (enTaller(o) && !['garantia', 'presupuesto', 'reparacion', 'esperando'].includes(o.estado)){ const antes = o.estado; o.estado = 'presupuesto'; registrar(`Cambió el estado de la ${o.num}`, o.num, 'reparaciones', { estado:ESTADOS_ORDEN[antes].t }, { estado:ESTADOS_ORDEN.presupuesto.t }); }
     o.hist.push({ f:hoy(), h:hora(), u:USUARIO, a:`${directo ? 'Armó el presupuesto ' + p.num + ' y lo mandó' : 'Mandó el presupuesto ' + p.num} al cliente (${usd(totalPresu(p))})` }); } }
-  p.est = 'enviado'; p.fEnvio = hoy(); registrar(directo ? 'Envió el presupuesto al cliente (sin aprobación)' : 'Envió el presupuesto al cliente', p.num, 'presupuestos'); guardar(); _cache = {}; armarNav(); ir('presupuestos', true, true);
+  p.est = 'enviado'; p.fEnvio = hoy(); registrar(directo ? 'Envió el presupuesto al cliente (sin aprobación)' : 'Envió el presupuesto al cliente', p.num, 'presupuestos'); guardar(); _cache = {}; armarNav(); if (quedarse) refrescar(); else ir('presupuestos', true, true);
   presuPDF(id, true);
 }
-function presuRespuesta(id, r){
+function presuRespuesta(id, r, quedarse){
   const p = D().presupuestos.find(x => x.id === id); if (!p || p.anulado || p.est !== 'enviado') return;
   p.est = r; p.fResp = hoy();
-  let falta = false;
+  let falta = false, nPedidos = 0;
   if (p.orden){ const o = orden(p.orden);
     if (o){
       o.hist.push({ f:hoy(), h:hora(), u:USUARIO, a:`El cliente ${r === 'aceptado' ? 'aceptó' : 'rechazó'} el presupuesto ${p.num}` });
       if (r === 'aceptado' && enTaller(o)){
         const rep = p.lineas.filter(l => l.tipo === 'repuesto' && !o.repuestos.some(x => x.cod === l.cod && x.est === 'aprobado' && !repuestoDevuelto(x)));
-        const items = rep.map(l => ({ cod:l.cod, cant:l.cant })), faltan = faltantesStock(items); falta = faltan.length > 0;
+        const items = rep.map(l => ({ cod:l.cod, cant:l.cant })), faltan = faltantesStock(items); falta = faltan.length > 0; nPedidos = items.length;
         const antes = o.estado; o.estado = falta ? 'esperando' : 'reparacion'; if (falta) o.esperaPorPedido = true;
         if (antes !== o.estado) registrar(`Cambió el estado de la ${o.num}`, o.num, 'reparaciones', { estado:ESTADOS_ORDEN[antes].t }, { estado:ESTADOS_ORDEN[o.estado].t });
         if (items.length) D().aprobaciones.push({ id:nuevoIdAprob(), tipo:'retiro', u:o.tec, f:hoy(), h:hora(), est:'pendiente', vistoBueno:[], orden:o.id, items, txt:'Del presupuesto aceptado ' + p.num });
         faltan.forEach(f => pedirADragur(f.cod, f.pide - Math.max(0, f.hay), o.num));
         if (falta && typeof sincronizarMinimos === 'function') sincronizarMinimos();
       } } }
-  registrar(`Presupuesto ${r} por el cliente`, p.num, 'presupuestos'); guardar(); _cache = {}; armarNav(); ir('presupuestos', true, true);
-  avisar(r === 'aceptado' ? (p.orden ? (falta ? 'Aceptado · la orden espera repuestos (se sumaron al pedido a Dragur) y quedaron pedidos' : 'Aceptado · la orden sigue a reparación y los repuestos quedaron pedidos') : 'Presupuesto aceptado por el cliente') : 'Presupuesto rechazado por el cliente', r === 'aceptado' ? 'check' : 'x', { tilde:r === 'aceptado' });
+  registrar(`Presupuesto ${r} por el cliente`, p.num, 'presupuestos'); guardar(); _cache = {}; armarNav(); if (!quedarse) ir('presupuestos', true, true);
+  avisar(r === 'aceptado' ? (p.orden ? (falta ? 'Aceptado · la orden espera repuestos (se sumaron al pedido a Dragur) y quedaron pedidos' : (nPedidos ? `Aceptado · la orden pasa a reparación y ${nPedidos === 1 ? 'el repuesto quedó pedido' : 'los ' + nPedidos + ' repuestos quedaron pedidos'}` : 'Aceptado · la orden pasa a reparación')) : 'Presupuesto aceptado por el cliente') : 'Presupuesto rechazado por el cliente', r === 'aceptado' ? 'check' : 'x', { tilde:r === 'aceptado' });
 }
 // Versión 2: queda guardada la anterior (marcada «Reemplazado»)
 function presuVersion(id){
