@@ -1951,6 +1951,17 @@ body.cel .rec-tipos button .ico{width:26px;height:26px}
 .ing-fotos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 18px}
 body.cel .ing-fotos{grid-template-columns:1fr}
 
+/* Ingreso de otro día (13-recepcion.js · fechaIngresoHTML) */
+.rec-auto{flex-wrap:wrap}
+.rec-auto .link{margin-left:auto;font-weight:600}
+.rec-auto.otra-fecha{background:var(--ambar-f);color:var(--ambar-t);border:1px solid var(--ambar);align-self:stretch}
+.rec-auto.otra-fecha b{color:var(--ambar-t)}
+.fecha-ing{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:10px;max-width:420px}
+body.cel .rec-auto{align-self:stretch}
+.rec-auto > span{flex:1 1 180px;min-width:0}
+.rec-auto > .ico{flex:none}
+.rec-cuerpo > .ayuda{font-size:13px;line-height:1.4;color:var(--texto-3);margin-top:-8px}
+
 
 /* ===== css/12e-pasos.css ===== */
 /* =====================================================================
@@ -2240,7 +2251,7 @@ const BV_FRASE  = 'Así puede quedar el taller: cada dron que entra con su check
 
 // Dónde se guardan los datos de ejemplo en el navegador de quien abre la demo.
 const CLAVE_GUARDADO = 'dronesdelpampa_demo_v1';
-const VERSION_DATOS = 8;
+const VERSION_DATOS = 9;
 
 // Contraseña de la DEMOSTRACIÓN (igual para todos).
 // ⚠ En la versión real cada usuario entra con su correo y su contraseña (Firebase Authentication)
@@ -4112,6 +4123,7 @@ function crearDatosEjemplo(h){
     ['diag1', 1, 'T40', 'diagnostico', 'tec1', 'No despega'],
     ['diag2', 2, 'P100', 'diagnostico', 'tec3', 'Error de radar'],
     ['presuEnv', 11, 'T40', 'presupuesto', 'tec3', 'Golpe en un brazo'],
+    ['presuEnv1', 4, 'T50', 'presupuesto', 'tec1', 'Error de motor · Vibra en vuelo'],   // 11/11/2026: para que el Técnico vea «Esperando respuesta del cliente»
     ['presuApr', 5, 'T25', 'presupuesto', 'tec2', 'Vibra en vuelo · Error de motor'],
     ['espera', 19, 'T40', 'esperando', 'tec3', 'Bomba no arranca'],
     ['pase', 4, 'T20P', 'reparacion', 'tec2', 'Pierde líquido'],
@@ -4278,6 +4290,8 @@ function crearDatosEjemplo(h){
   // Presupuesto enviado al cliente (esperando respuesta) y otro esperando el visto bueno de Claudio
   diag(A.presuEnv, 1.5); estado(A.presuEnv, 'diagnostico', 'presupuesto', sumarDias(A.presuEnv.f, 2), '11:50', 'tec3');
   circuito(presu({ orden:A.presuEnv.id, cli:A.presuEnv.cli, u:'tec3', f:sumarDias(A.presuEnv.f, 2), h:'10:40', lineas:lineasOrden(itemsPara('T40', 3, ['Estructura', 'Hélices', 'Tornillería y juntas']), 4) }), 'enviado');
+  diag(A.presuEnv1, 1); estado(A.presuEnv1, 'diagnostico', 'presupuesto', sumarDias(A.presuEnv1.f, 2), '16:05', 'tec1');
+  circuito(presu({ orden:A.presuEnv1.id, cli:A.presuEnv1.cli, u:'tec1', f:sumarDias(A.presuEnv1.f, 2), h:'15:50', lineas:lineasOrden(itemsPara('T50', 2, ['Motores', 'Hélices']), 3) }), 'enviado');
   diag(A.presuApr, 1.5, sumarDias(h, -1));
   const [fPA, hPA] = hace(62); estado(A.presuApr, 'diagnostico', 'presupuesto', fPA, hPA, 'tec2');
   const pApr = presu({ orden:A.presuApr.id, cli:A.presuApr.cli, u:'tec2', f:fPA, h:masMin(hPA, -25), lineas:lineasOrden(itemsPara('T25', 3), 5) });
@@ -6677,13 +6691,41 @@ function pintarRec(){
 }
 function recIr(i){ REC().paso = i; recGuardar(); pintarRec(); scrollTo({ top:0 }); }
 
+/* ---------- Fecha del ingreso (11/11/2026, pedido de la usuaria) ----------
+   Lo normal es «hoy, ahora». Con «Ingresó otro día» se carga un equipo que entró antes (mismo checklist):
+   la orden queda con esa fecha y hora (días en el taller, historial, comprobante) y en el historial y la
+   actividad queda que se cargó después. Sirve igual para el dron, el generador y el control. */
+const fechaIngreso = r => r && r.fechaIng && r.fechaIng < hoy() ? { f:r.fechaIng, h:r.horaIng || '09:00', tarde:true } : { f:hoy(), h:hora(), tarde:false };
+function fechaIngresoHTML(r, tipo){
+  const otra = !!r.fechaIng, F = fechaIngreso(r);
+  return `<div class="rec-auto ${otra ? 'otra-fecha' : ''}">${ico(otra ? 'calendario' : 'reloj', 'chico')}<span>${otra ? `Ingresó el <b>${fCorta(F.f)}</b> a las <b>${F.h}</b> · lo carga` : `${fCorta(hoy())} · ${hora()} · recibe`} <b>${esc(nomUsuario(USUARIO))}</b></span>
+      <button class="link" onclick="fechaIngSet('${tipo}','fechaIng','${otra ? '' : sumarDias(hoy(), -1)}')">${otra ? 'Volver a hoy' : 'Ingresó otro día'}</button></div>
+    ${otra ? `<div class="rec-fila fecha-ing">${campo('Fecha de ingreso', `<input type="date" value="${esc(r.fechaIng)}" max="${sumarDias(hoy(), -1)}" onchange="fechaIngSet('${tipo}','fechaIng',this.value)">`, { req:true })}
+        ${campo('Hora', `<input type="time" value="${esc(r.horaIng || '09:00')}" onchange="fechaIngSet('${tipo}','horaIng',this.value)">`)}</div>
+      <div class="ayuda">Queda con esa fecha (días en el taller, historial y comprobante). En el historial figura que lo cargaste hoy.</div>` : ''}`;
+}
+function fechaIngSet(tipo, campoF, v){
+  const r = tipo === 'dron' ? REC() : ING();
+  if (campoF === 'fechaIng'){
+    if (v && v >= hoy()){ error('Para un ingreso de hoy, tocá «Volver a hoy»'); v = sumarDias(hoy(), -1); }
+    if (v && !r.horaIng) r.horaIng = '09:00';
+  }
+  r[campoF] = v || ''; recGuardar(); if (tipo === 'dron') pintarRec(); else pintarIng();
+}
+// Lo que se anota en la orden al confirmar un ingreso (de hoy o de otro día)
+function histIngreso(r, texto){
+  const F = fechaIngreso(r), h = [{ f:F.f, h:F.h, u:USUARIO, a:texto }];
+  if (F.tarde) h.push({ f:hoy(), h:hora(), u:USUARIO, a:`Cargó el ingreso después: entró el ${fCorta(F.f)} a las ${F.h}` });
+  return h;
+}
+
 /* ---------- Cada paso ---------- */
 const PASO_HTML = [
   // 1. Datos del ingreso
   r => {
     const c = cliente(r.cli), dr = D().drones.find(x => x.chasis === String(r.chasis || '').trim()), dronesCli = c ? D().drones.filter(x => x.cli === c.id) : [];
     const abierta = ordenAbiertaDron(r.chasis);
-    return `<div class="rec-auto">${ico('reloj', 'chico')} ${fCorta(hoy())} · ${hora()} · recibe <b>${esc(nomUsuario(USUARIO))}</b></div>
+    return `${fechaIngresoHTML(r, 'dron')}
       ${campo('Cliente', c ? `<div class="elegido">${avatar(c.nombre)}<span><b>${esc(c.nombre)}</b><small>${esc(datosCli(c))}</small></span><button class="link" onclick="recSet('cli','')">Cambiar</button></div>`
         : `<div class="fila-in"><input id="rec-cli" placeholder="Buscá por nombre, RUT o localidad" autocomplete="off"><button class="btn btn-linea" onclick="clienteNuevo(id => recSet('cli', id))">${ico('mas')} Nuevo</button></div>`, { req:true })}
       ${dronesCli.length ? `<div class="sug-drones"><small>Drones de este cliente</small>${dronesCli.map(x => { const ab = ordenesActivas().find(o => o.dron === x.id); return `<button class="${x.chasis === r.chasis ? 'on' : ''}" onclick="recDron('${x.id}')">${ico('dron')}<span><b>${modeloTxt(x.modelo)}</b><small class="num">${esc(x.chasis)}${ab ? ' · en el taller (' + ab.num + ')' : ''}</small></span></button>`; }).join('')}</div>` : ''}
@@ -6751,7 +6793,7 @@ const PASO_HTML = [
   r => {
     const fotos = fotosRec(r);
     return `<div class="rec-resumen">
-        <div><small>Cliente</small><b>${esc(nomCli(r.cli))}</b></div><div><small>Dron</small><b>${r.modelo ? modeloTxt(r.modelo) : '—'}</b></div>
+        ${r.fechaIng ? `<div class="ancho"><small>Ingresó</small><b>${fCorta(fechaIngreso(r).f)} · ${fechaIngreso(r).h} (se carga hoy)</b></div>` : ''}<div><small>Cliente</small><b>${esc(nomCli(r.cli))}</b></div><div><small>Dron</small><b>${r.modelo ? modeloTxt(r.modelo) : '—'}</b></div>
         <div><small>Chasis</small><b class="num">${esc(r.chasis) || '—'}</b></div><div><small>Horas de vuelo</small><b class="num">${esc(r.horas) || '—'}</b></div>
         <div><small>Baterías</small><b>${r.baterias.length}</b></div><div><small>Fotos</small><b>${fotos.length}</b></div>
         <div class="ancho"><small>Síntomas</small><b>${esc(r.frases.join(' · ') || r.sintCli || '—')}</b></div>
@@ -6956,24 +6998,27 @@ async function recConfirmar(){
   if (ab && !await confirmar('Este dron ya está en el taller', `Tiene abierta la <b>${ab.num}</b> (${esc(ESTADOS_ORDEN[ab.estado].t)}, a cargo de ${esc(nomUsuario(ab.tec))}). ¿Crear otra orden igual?`, 'Crear otra orden', true)) return;
   let dr = D().drones.find(x => x.chasis === r.chasis.trim());
   if (!dr){ dr = { id:'d' + (D().drones.length + 1) + Math.random().toString(36).slice(2, 5), chasis:r.chasis.trim(), modelo:r.modelo, cli:r.cli, compra:'Dragur', activacion:'', garantiaMeses:D().config.garantiaDronMeses, bombasMeses:D().config.garantiaBombasMeses, horasVuelo:0 }; D().drones.push(dr); }
-  dr.horasVuelo = numero(r.horas);
-  const anio = hoy().slice(0, 4), num = 'OR-' + anio + '-' + String(D().numOR = (D().numOR || 150) + 1).padStart(4, '0');
+  // Ingreso de otro día: las horas de vuelo del dron no bajan si ya tenía una lectura más nueva
+  const F = fechaIngreso(r);
+  dr.horasVuelo = F.tarde ? Math.max(Number(dr.horasVuelo) || 0, numero(r.horas)) : numero(r.horas);
+  const anio = F.f.slice(0, 4), num = 'OR-' + anio + '-' + String(D().numOR = (D().numOR || 150) + 1).padStart(4, '0');
   const sint = r.frases.concat(r.sintCli ? [r.sintCli] : []).join(' · ');
-  const o = { id:'o' + Date.now().toString(36), num, f:hoy(), h:hora(), dron:dr.id, cli:r.cli, modelo:r.modelo, chasis:dr.chasis, tec:r.tec, recibio:USUARIO, estado:'recibido',
-    horasVuelo:dr.horasVuelo, sintoma:sint, obs:r.obs, repuestos:[], horas:[], fotos:fotosRec(r).length, bateriasN:r.baterias.length, entrega:r.entrega, conforme:true,
-    check:JSON.parse(JSON.stringify(r)), hist:[{ f:hoy(), h:hora(), u:USUARIO, a:'Recibió el dron con su checklist completo' }], creado:{ u:USUARIO, f:hoy(), h:hora() } };
+  const o = { id:'o' + Date.now().toString(36), num, f:F.f, h:F.h, dron:dr.id, cli:r.cli, modelo:r.modelo, chasis:dr.chasis, tec:r.tec, recibio:USUARIO, estado:'recibido',
+    horasVuelo:numero(r.horas), sintoma:sint, obs:r.obs, repuestos:[], horas:[], fotos:fotosRec(r).length, bateriasN:r.baterias.length, entrega:r.entrega, conforme:true,
+    check:JSON.parse(JSON.stringify(r)), hist:histIngreso(r, 'Recibió el dron con su checklist completo'), creado:{ u:USUARIO, f:hoy(), h:hora() } };
+  if (F.tarde) o.cargadoDespues = { f:hoy(), h:hora() };
   delete o.check.paso;
   if (ab) o.hist.push({ f:hoy(), h:hora(), u:USUARIO, a:`Se recibió aunque el dron ya tenía abierta la ${ab.num}` });
   if (r.tec !== USUARIO) o.hist.push({ f:hoy(), h:hora(), u:USUARIO, a:'Asignó como responsable a ' + nomUsuario(r.tec) });
   D().ordenes.unshift(o);
-  registrar('Recibió el dron · ' + modeloTxt(r.modelo) + ' de ' + nomCli(r.cli), num, 'recepcion');
+  registrar('Recibió el dron · ' + modeloTxt(r.modelo) + ' de ' + nomCli(r.cli) + (F.tarde ? ` (ingresó el ${fCorta(F.f)} ${F.h}, cargado después)` : ''), num, 'recepcion');
   D().borradores[USUARIO] = recNuevo(); guardar(); _cache = {};
   REC_LISTA = o.id; armarNav(); ir('recepcion');
 }
 function pintarRecLista(v){
   const o = orden(REC_LISTA); if (!o){ REC_LISTA = null; return RENDER.recepcion(v); }
   v.innerHTML = `<div class="rec-listo tarjeta">${tildeAnimado()}<h2>Ingreso confirmado</h2>
-    <p>Se creó la orden <b>${o.num}</b> · ${modeloTxt(o.modelo)} de ${esc(nomCli(o.cli))}.<br>Queda a nombre de <b>${esc(nomUsuario(o.tec))}</b>, y a ${esc(nomDueno())} le llegó el aviso.</p>
+    <p>Se creó la orden <b>${o.num}</b> · ${modeloTxt(o.modelo)} de ${esc(nomCli(o.cli))}${o.cargadoDespues ? ` · con fecha de ingreso <b>${fCorta(o.f)} ${o.h}</b>` : ''}.<br>Queda a nombre de <b>${esc(nomUsuario(o.tec))}</b>, y a ${esc(nomDueno())} le llegó el aviso.</p>
     <div class="rl-acc">
       <button class="btn btn-prim btn-xl" onclick="comprobanteRecepcion('${o.id}')">${ico('imprimir')} Comprobante (2 copias)</button>
       <button class="btn btn-linea btn-xl" onclick="comprobanteRecepcion('${o.id}', true)">${ico('whatsapp')} Mandar por WhatsApp</button>
@@ -7129,7 +7174,7 @@ const ING_PASOS = [
   // 1. Datos
   (r, T) => {
     const c = cliente(r.cli), lista = equiposDe(r.tipo), ab = ordenAbiertaEquipo(r.tipo, r.serie);
-    return `<div class="rec-auto">${ico('reloj', 'chico')} ${fCorta(hoy())} · ${hora()} · recibe <b>${esc(nomUsuario(USUARIO))}</b></div>
+    return `${fechaIngresoHTML(r, 'ing')}
       ${campo('Cliente', c ? `<div class="elegido">${avatar(c.nombre)}<span><b>${esc(c.nombre)}</b><small>${esc(datosCli(c))}</small></span><button class="link" onclick="ingSet('cli','')">Cambiar</button></div>`
         : `<div class="fila-in"><input id="ing-cli" placeholder="Buscá por nombre, RUT o localidad" autocomplete="off"><button class="btn btn-linea" onclick="clienteNuevo(id => ingSet('cli', id))">${ico('mas')} Nuevo</button></div>`, { req:true })}
       ${campo(r.tipo === 'generador' ? 'Tipo de generador' : 'Modelo del control', `<div class="opciones modelos">${lista.map((m, i) => `<button type="button" class="opc ${r.modelo === m ? 'on' : ''}" onclick="ingModelo(${i})">${r.modelo === m ? ico('check') : ''}${esc(m)}</button>`).join('')}<button type="button" class="opc opc-mas ${r.modelo === 'Otro' ? 'on' : ''}" onclick="ingSet('modelo','Otro')">${ico('mas')} Otro</button></div>`, { req:true })}
@@ -7169,7 +7214,7 @@ const ING_PASOS = [
     const trae = r.tipo === 'generador' ? [['Batería', r.bateria.trae === 'Sí' ? 'Sí · ' + (r.bateria.estado || '—') : r.bateria.trae || '—']]
       : [['Valija', r.valija.trae === 'Sí' ? 'Sí · ' + (r.valija.estado || '—') : r.valija.trae || '—'], ['Batería externa', r.batExt.trae === 'Sí' ? (r.batExt.n || 1) + ' · ' + (r.batExt.estado || '—') : r.batExt.trae || '—']];
     return `<div class="rec-resumen">
-        <div><small>Cliente</small><b>${esc(nomCli(r.cli))}</b></div><div><small>${esc(T.t)}</small><b>${r.modelo ? esc(nombreEquipo(r)) : '—'}</b></div>
+        ${r.fechaIng ? `<div class="ancho"><small>Ingresó</small><b>${fCorta(fechaIngreso(r).f)} · ${fechaIngreso(r).h} (se carga hoy)</b></div>` : ''}<div><small>Cliente</small><b>${esc(nomCli(r.cli))}</b></div><div><small>${esc(T.t)}</small><b>${r.modelo ? esc(nombreEquipo(r)) : '—'}</b></div>
         <div><small>N° de serie</small><b class="num">${esc(r.serie) || '—'}</b></div>${r.tipo === 'generador' ? `<div><small>Horas de uso</small><b class="num">${esc(r.horas) || '—'}</b></div>` : ''}
         ${trae.map(([t, x]) => `<div><small>${t}</small><b>${esc(x)}</b></div>`).join('')}<div><small>Fotos</small><b>${fotos.length}</b></div>
         <div class="ancho"><small>Errores</small><b>${esc(r.errores.concat(r.codigo ? ['Código ' + r.codigo] : []).join(' · ') || r.sintCli || '—')}</b></div>
@@ -7247,16 +7292,17 @@ async function ingConfirmar(){
   if (faltan.length){ error('Falta completar: ' + faltan.map(i => T.pasos[i]).join(', ')); ingIr(faltan[0]); setTimeout(() => marcarFaltante('#rec-cuerpo'), 350); return; }
   const ab = ordenAbiertaEquipo(r.tipo, r.serie);
   if (ab && !await confirmar('Este equipo ya está en el taller', `Tiene abierta la <b>${ab.num}</b> (${esc(ESTADOS_ORDEN[ab.estado].t)}, a cargo de ${esc(nomUsuario(ab.tec))}). ¿Crear otra orden igual?`, 'Crear otra orden', true)) return;
-  const anio = hoy().slice(0, 4), num = 'OR-' + anio + '-' + String(D().numOR = (D().numOR || 150) + 1).padStart(4, '0'), eq = nombreEquipo(r);
+  const F = fechaIngreso(r);   // hoy, o el día en que entró si se carga después (13-recepcion.js)
+  const anio = F.f.slice(0, 4), num = 'OR-' + anio + '-' + String(D().numOR = (D().numOR || 150) + 1).padStart(4, '0'), eq = nombreEquipo(r);
   const sint = r.errores.concat(r.codigo ? ['Código ' + r.codigo] : [], r.sintCli ? [r.sintCli] : []).join(' · ');
-  const o = { id:'o' + Date.now().toString(36), num, f:hoy(), h:hora(), tipo:r.tipo, dron:null, cli:r.cli, modelo:eq, chasis:String(r.serie).trim(), tec:r.tec, recibio:USUARIO, estado:'recibido',
+  const o = { id:'o' + Date.now().toString(36), num, f:F.f, h:F.h, tipo:r.tipo, dron:null, cli:r.cli, modelo:eq, chasis:String(r.serie).trim(), tec:r.tec, recibio:USUARIO, estado:'recibido',
     horasVuelo:r.tipo === 'generador' ? numero(r.horas) : 0, sintoma:sint, obs:r.obs, repuestos:[], horas:[], fotos:fotosIng(r).length, bateriasN:0, entrega:r.entrega, conforme:true,
-    check:JSON.parse(JSON.stringify(r)), hist:[{ f:hoy(), h:hora(), u:USUARIO, a:`Recibió el ${r.tipo === 'generador' ? 'generador' : 'control remoto'} con su checklist completo` }], creado:{ u:USUARIO, f:hoy(), h:hora() } };
-  delete o.check.paso;
+    check:JSON.parse(JSON.stringify(r)), hist:histIngreso(r, `Recibió el ${r.tipo === 'generador' ? 'generador' : 'control remoto'} con su checklist completo`), creado:{ u:USUARIO, f:hoy(), h:hora() } };
+  delete o.check.paso; if (F.tarde) o.cargadoDespues = { f:hoy(), h:hora() };
   if (ab) o.hist.push({ f:hoy(), h:hora(), u:USUARIO, a:`Se recibió aunque el equipo ya tenía abierta la ${ab.num}` });
   if (r.tec !== USUARIO) o.hist.push({ f:hoy(), h:hora(), u:USUARIO, a:'Asignó como responsable a ' + nomUsuario(r.tec) });
   D().ordenes.unshift(o);
-  registrar(`Recibió ${r.tipo === 'generador' ? 'el generador' : 'el control remoto'} · ${eq} de ${nomCli(r.cli)}`, num, 'recepcion');
+  registrar(`Recibió ${r.tipo === 'generador' ? 'el generador' : 'el control remoto'} · ${eq} de ${nomCli(r.cli)}${F.tarde ? ` (ingresó el ${fCorta(F.f)} ${F.h}, cargado después)` : ''}`, num, 'recepcion');
   D().borradoresIng[USUARIO][r.tipo] = ingNuevo(r.tipo); guardar(); _cache = {};
   REC_LISTA = o.id; armarNav(); ir('recepcion');
 }
